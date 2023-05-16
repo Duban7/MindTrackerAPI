@@ -105,7 +105,7 @@ namespace BLL.Implementation
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
+                expires: DateTime.UtcNow.Add(TimeSpan.FromSeconds(10)),
                 signingCredentials: new SigningCredentials(_jwtOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
            
             string encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);

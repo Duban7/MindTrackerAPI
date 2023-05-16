@@ -25,31 +25,44 @@ namespace BLL.Implementation
             _logger = logger;
         }
 
-        public async Task DeleteAll(string accountId)
-        {
-            throw new NotImplementedException();
-        }
+        public async Task DeleteAll(string accountId) =>
+            await _moodMarksRepository.RemoveAllAsync(accountId);
 
         public async Task DeleteOne(DateTime date, string accountId)
         {
-            DeleteResult result = await _moodMarksRepository.RemoveAsync(date, accountId);
+            long deletedCount = await _moodMarksRepository.RemoveAsync(date, accountId);
 
-            if (result.DeletedCount < 1) throw new DeleteMoodMarkException("Nothing has been deleted");
+            if (deletedCount < 1) throw new DeleteMoodMarkException("Nothing has been deleted");
 
-            if (result.DeletedCount > 1) throw new DeleteMoodMarkException("More than needed was deleted");
+            if (deletedCount > 1) throw new DeleteMoodMarkException("More than needed has been deleted");
         }
 
-        public async Task<List<MoodMark>> GetAllMoodMarks(string accountId)=>
+        public async Task<List<MoodMark>> GetAllMoodMarks(string accountId) =>
             await _moodMarksRepository.GetAllAsync(accountId);
 
         public async Task UpdateAll(List<MoodMark> moodMarks, string accoutnId)
         {
-            throw new NotImplementedException();
+            List<MoodMark> currentMoodMarks = await _moodMarksRepository.GetAllAsync(accoutnId);
+
+            List<MoodMark> marksToUpdate = currentMoodMarks.IntersectBy(moodMarks.Select(x => x.Date.Day), x => x.Date.Day).ToList();
+            List<MoodMark> marksToDelete = currentMoodMarks.ExceptBy(moodMarks.Select(x => x.Date.Day), x => x.Date.Day).ToList();
+            List<MoodMark> marksToInsert = moodMarks.ExceptBy(currentMoodMarks.Select(x => x.Date.Day), x => x.Date.Day).ToList();
+
+            long updatedMoodMarks = await _moodMarksRepository.UpdateManyAsync(marksToUpdate);
+            long deleteddMoodMarks = await _moodMarksRepository.RemoveManyAsync(marksToDelete);
+            await _moodMarksRepository.InsertManyAsync(marksToInsert);
+
+            if (updatedMoodMarks != marksToUpdate.Count) throw new UpdateMoodMarkException("Updated MoodMarks count doesn't match count MoodMarks that has to be updated");
+            if (deleteddMoodMarks != marksToDelete.Count) throw new DeleteMoodMarkException("Deleted MoodMarks count doesn't match count MoodMarks that has to be deleted");
         }
 
-        public async Task UpdateOne(MoodMark moodMark)
+        public async Task UpdateOne(MoodMark moodMark) 
         {
-            throw new NotImplementedException();
-        }
+           long result =  await _moodMarksRepository.UpdateAsync(moodMark);
+
+            if (result < 1) throw new UpdateMoodMarkException("Nothing has been updated");
+
+            if (result > 1) throw new UpdateMoodMarkException("More than needed has been updated");
+        } 
     }
 }
