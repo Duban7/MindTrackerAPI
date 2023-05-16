@@ -39,10 +39,10 @@ namespace BLL.Implementation
         {
             var user = await _accountRepository.GetOneByEmailAsync(newAccount.Email!);
 
-            if (user == null) throw new AccountAlreadyExistsException("User is alread exists");
+            if (user != null) throw new AccountAlreadyExistsException("User is alread exists");
 
             string id = _accountRepository.GenerateObjectID();
-            Account createdAccount = new Account()
+            Account createdAccount = new()
             {
                 Id = id,
                 Email = newAccount.Email,

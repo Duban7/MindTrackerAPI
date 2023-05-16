@@ -21,11 +21,9 @@ namespace BLL.DI
         public static void RegisterDependency(this IServiceCollection services, ConfigurationManager configuration)
         {
             services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerDatabase"));
-
             services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
 
             services.AddAuthorization();
-
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 IServiceProvider serviceProvider = services.BuildServiceProvider();
@@ -66,15 +64,22 @@ namespace BLL.DI
                 return mongoDatabase.GetCollection<Account>("Accounts");
 
             });
+            services.AddScoped<IMongoCollection<MoodMark>>((serviceProvider) =>
+            {
+                IMongoDatabase mongoDatabase = serviceProvider.GetService<IMongoDatabase>()!;
 
+                return mongoDatabase.GetCollection<MoodMark>("MoodMarks");
+
+            });
+
+            services.AddTransient<IMoodMarksRepository, MoodMarksRepository>();
             services.AddTransient<IAccountRepository, AccountRepository>();
 
+            services.AddTransient<IMoodMarksService, MoodMarksService>();
             services.AddTransient<IAccountService, AccountService>();
 
             services.AddControllers();
-
             services.AddEndpointsApiExplorer();
-
             services.AddSwaggerGen();
         }
     }

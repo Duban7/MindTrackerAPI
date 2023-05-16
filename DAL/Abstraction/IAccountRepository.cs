@@ -2,7 +2,7 @@
 
 namespace DAL.Abstraction
 {
-    public interface IAccountRepository : IRepository<Account>
+    public interface IAccountRepository 
     {
         public Task<Account?> GetOneByIdAsync(string id);
         public Task CreateAsync(Account newAccount);
