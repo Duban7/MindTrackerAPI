@@ -20,6 +20,13 @@ namespace MindTrackerServer.Controllers
         }
 
         [HttpGet]
+        [Route("start")]
+        public ActionResult Init()
+        {
+            return Ok("Well, now you can do some request");
+        }
+
+        [HttpGet]
         [Route("mood-mark/all")]
         [Authorize]
         public async Task<ActionResult<List<MoodMark>>> GetAll()
@@ -27,7 +34,7 @@ namespace MindTrackerServer.Controllers
 
             List<MoodMark> allMoodMarks = await _moodMarksService.GetAllMoodMarks(GetAccountId());
 
-            return allMoodMarks.Count <1 ? NotFound() : Ok();
+            return allMoodMarks.Count <1 ? NotFound() : Ok(allMoodMarks);
         }
 
         [HttpPut]
@@ -46,6 +53,16 @@ namespace MindTrackerServer.Controllers
         public async Task<ActionResult> DeleteAll()
         {
             await _moodMarksService.DeleteAll(GetAccountId());
+
+            return NoContent();
+        }
+
+        [HttpPost]
+        [Route("mood-mark")]
+        [Authorize]
+        public async Task<ActionResult> InsertOne([FromBody] MoodMark moodMark)
+        {
+            await _moodMarksService.InsertOne(moodMark);
 
             return NoContent();
         }

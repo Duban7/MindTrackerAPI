@@ -30,7 +30,7 @@ namespace MindTrackerServer.MiddleWares
                     AccountNotFoundException => StatusCodes.Status401Unauthorized,
                     AccountAlreadyExistsException => StatusCodes.Status422UnprocessableEntity,
                     AccountIdMatchException => StatusCodes.Status400BadRequest,
-                    AccountRefreshTokenMatchException => StatusCodes.Status400BadRequest,
+                    AccountRefreshTokenException => StatusCodes.Status400BadRequest,
                     _ => StatusCodes.Status500InternalServerError,
                 };
 

@@ -85,7 +85,9 @@ namespace BLL.Implementation
         {
             Account? foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("User doesn't exist");
 
-            if (foundAccount.RefreshToken != oldRefreshToken) throw new AccountRefreshTokenMatchException("Account token doesn't match request token");
+            if (foundAccount.RefreshToken != oldRefreshToken) throw new AccountRefreshTokenException("Account token doesn't match request token");
+
+            if (foundAccount.RefreshToken.Expires < DateTime.UtcNow) throw new AccountRefreshTokenException("Refresh tolen is expired");
 
             RefreshToken newRefreshToken = GenerateRefreshToken();
             foundAccount.RefreshToken = newRefreshToken;
@@ -105,7 +107,7 @@ namespace BLL.Implementation
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.Add(TimeSpan.FromSeconds(10)),
+                expires: DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
                 signingCredentials: new SigningCredentials(_jwtOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
            
             string encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
@@ -113,7 +115,7 @@ namespace BLL.Implementation
             return encodedJwt;
         }
 
-        public RefreshToken GenerateRefreshToken()
+        private static RefreshToken GenerateRefreshToken()
         {
             var refreshToken = new RefreshToken
             {

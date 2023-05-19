@@ -71,6 +71,9 @@ namespace DAL.Implementation
             await _moodMarksCollection.InsertManyAsync(marksToInsert);
         
 
+        public async Task InsertAsync(MoodMark moodMark)=>
+            await _moodMarksCollection.InsertOneAsync(moodMark);
+
         public async Task<long> UpdateAsync(MoodMark moodMark)
         {
             moodMark.Id ??= ObjectId.GenerateNewId().ToString();

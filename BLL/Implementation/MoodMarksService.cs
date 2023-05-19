@@ -25,6 +25,9 @@ namespace BLL.Implementation
             _logger = logger;
         }
 
+        public async Task InsertOne(MoodMark moodMark)=>
+            await _moodMarksRepository.InsertAsync(moodMark);
+
         public async Task DeleteAll(string accountId) =>
             await _moodMarksRepository.RemoveAllAsync(accountId);
 

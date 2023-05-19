@@ -13,11 +13,11 @@ app.UseMiddleware<ErrorHandlerMiddleWare>();
 
 app.UseHttpsRedirection();
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 app.UseRouting();
 
