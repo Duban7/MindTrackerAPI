@@ -1,5 +1,7 @@
-﻿using DAL.Abstraction;
+﻿using Amazon.Runtime.Internal.Util;
+using DAL.Abstraction;
 using Domain.Models;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
@@ -12,10 +14,12 @@ namespace DAL.Implementation
 {
     public class MoodMarksRepository : IMoodMarksRepository
     {
-        public readonly IMongoCollection<MoodMark> _moodMarksCollection;
-        public MoodMarksRepository(IMongoCollection<MoodMark> moodMarksCollection) 
+        private readonly IMongoCollection<MoodMark> _moodMarksCollection;
+        private readonly ILogger<MoodMarksRepository> _logger;
+        public MoodMarksRepository(IMongoCollection<MoodMark> moodMarksCollection, ILogger<MoodMarksRepository> logger) 
         {
             _moodMarksCollection = moodMarksCollection;
+            _logger = logger;
         }
 
         public async Task<List<MoodMark>> GetAllAsync(string accountId) =>
@@ -36,22 +40,22 @@ namespace DAL.Implementation
             return result.DeletedCount;
         }
 
-        public async Task<long> UpdateManyAsync(List<MoodMark> marksToUpdate)
+        public async Task<long> UpdateManyAsync(List<MoodMark> marksToUpdate, string accountId)
         {
             var updates = new List<WriteModel<MoodMark>>();
             var filterBuilder = Builders<MoodMark>.Filter;
 
             foreach(MoodMark moodMark in marksToUpdate)
             {
-                var filter = filterBuilder.Where(x => x.Id == moodMark.Id);
+                var filter = filterBuilder.Where(x => x.Date.Day == moodMark.Date.Day && x.Date.Month == moodMark.Date.Month && x.Date.Year == moodMark.Date.Year && x.AccountId == accountId);
                 updates.Add(new ReplaceOneModel<MoodMark>(filter, moodMark));
             }
 
             var result = await _moodMarksCollection.BulkWriteAsync(updates);
-            
-            //foreach(var m in moodMarks) await _moodMarksCollection.ReplaceOneAsync(x => x.AccountId == m.AccountId && x.Date.Day == m.Date.Day, m);
 
-            return result.ModifiedCount; 
+           //foreach(var m in moodMarks) await _moodMarksCollection.ReplaceOneAsync(x => x.AccountId == m.AccountId && x.Date.Day == m.Date.Day, m);
+
+            return result.MatchedCount; 
         }
 
         public async Task<long> RemoveManyAsync(List<MoodMark> marksToDelete)

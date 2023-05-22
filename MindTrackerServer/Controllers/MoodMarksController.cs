@@ -62,7 +62,7 @@ namespace MindTrackerServer.Controllers
         [Authorize]
         public async Task<ActionResult> InsertOne([FromBody] MoodMark moodMark)
         {
-            await _moodMarksService.InsertOne(moodMark);
+            await _moodMarksService.InsertOne(moodMark, GetAccountId());
 
             return NoContent();
         }
@@ -72,7 +72,7 @@ namespace MindTrackerServer.Controllers
         [Authorize]
         public async Task<ActionResult> UpdateOne([FromBody] MoodMark moodMark)
         {
-            await _moodMarksService.UpdateOne(moodMark);
+            await _moodMarksService.UpdateOne(moodMark, GetAccountId());
 
             return NoContent();
         }

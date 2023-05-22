@@ -12,7 +12,7 @@ namespace DAL.Abstraction
     {
         public Task<List<MoodMark>> GetAllAsync(string accountId);
         public Task RemoveAllAsync(string accountId);
-        public Task<long> UpdateManyAsync(List<MoodMark> moodMarks);
+        public Task<long> UpdateManyAsync(List<MoodMark> moodMarks, string accountId);
         public Task<long> RemoveManyAsync(List<MoodMark> moodMarks);
         public Task InsertManyAsync(List<MoodMark> moodMarks);
         public Task<MoodMark> GetOneAsync(DateTime date, string accountId);

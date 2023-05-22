@@ -2,6 +2,7 @@
 using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace MindTrackerServer.Controllers
 {
@@ -73,11 +74,11 @@ namespace MindTrackerServer.Controllers
         }
 
         [HttpGet]
-        [Route("account/{id}")]
+        [Route("account")]
         [Authorize]
-        public async Task<ActionResult> GetUser(string id)
+        public async Task<ActionResult> GetUser()
         {
-            Account? foundAccount = await _accountService.GetAccount(id);
+            Account? foundAccount = await _accountService.GetAccount(GetAccountId());
 
             return foundAccount == null ? BadRequest() : Ok(foundAccount);
         }
@@ -101,5 +102,8 @@ namespace MindTrackerServer.Controllers
 
             return NoContent();
         }
+
+        private string GetAccountId() =>
+          this.User.Claims.First(i => i.Type == ClaimTypes.NameIdentifier).Value ?? throw new Exception("");
     }
 }
