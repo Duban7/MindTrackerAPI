@@ -10,6 +10,7 @@ namespace BLL.Abstraction
         public Task<Account?> LogIn(Account logInAccount);
         public Task<Account?> GetAccount(string id);
         public Task<Account?> UpdateRefreshToken (RefreshToken oldRefreshToken, string id);
+        public Task ResetPassword(string email);
         public string GenerateJwtToken(Account account);
     }
 }

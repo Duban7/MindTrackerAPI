@@ -15,31 +15,54 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Exceptions;
+using MimeKit;
+using MailKit.Net.Smtp;
+using FluentValidation;
+using FluentValidation.Results;
+using MindTrackerServer.Validators;
 
 namespace BLL.Implementation
 {
     public class AccountService : IAccountService
     {
         private readonly IAccountRepository _accountRepository;
-       
-
         private readonly JwtOptions _jwtOptions;
-
-        public readonly ILogger<AccountService> _logger;
+        private readonly ILogger<AccountService> _logger;
+        private readonly IValidator<Account> _accountValidator;
 
         public AccountService(IAccountRepository accountRepository,
                             IOptions<JwtOptions> jwtOptions,
-                            ILogger<AccountService> logger)
+                            ILogger<AccountService> logger,
+                            IValidator<Account> validator)
         {
             _accountRepository = accountRepository;
             _jwtOptions = jwtOptions.Value;
             _logger = logger;
+            _accountValidator = validator;
         }
         public async Task<Account?> CreateAccount(Account newAccount)
         {
+            ValidationResult result = await _accountValidator.ValidateAsync(newAccount);
+
+            if (!result.IsValid)
+            {
+                StringBuilder errors = new();
+
+                _logger.LogError("Invalid account");
+
+                foreach (var error in result.Errors)
+                {
+                    _logger.LogError(error.ErrorMessage);
+                    errors.Append(error.ErrorMessage);
+                    errors.Append(";\n");
+                }
+
+                throw new InvalidAccountException(errors.ToString());
+            }
+
             var user = await _accountRepository.GetOneByEmailAsync(newAccount.Email!);
 
-            if (user != null) throw new AccountAlreadyExistsException("User is alread exists");
+            if (user != null) throw new AccountAlreadyExistsException("Account is alread exists");
 
             string id = _accountRepository.GenerateObjectID();
             Account createdAccount = new()
@@ -57,16 +80,14 @@ namespace BLL.Implementation
 
         public async Task UpdateAccount(Account account, string id)
         {
-            _ = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("User doesn't exist");
-
-            if (account.Id != id) throw new AccountIdMatchException("Account Id doesn't match request Id");
+            _ = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
 
             await _accountRepository.UpdateAsync(account);
         }
 
         public async Task DeleteAccount(string id)
         {
-            _ = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("User doesn't exist");
+            _ = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
 
             await _accountRepository.RemoveAsync(id);
         }
@@ -75,7 +96,7 @@ namespace BLL.Implementation
         {
             Account? foundAccount = await _accountRepository.GetOneByEmailAndPasswordAsync(logInAccount.Email!, logInAccount.Password!);
 
-            return foundAccount ?? throw new AccountNotFoundException("User doesn't exist");
+            return foundAccount ?? throw new AccountNotFoundException("Account doesn't exist");
         }
 
         public async Task<Account?> GetAccount(string id) =>
@@ -83,9 +104,9 @@ namespace BLL.Implementation
 
         public async Task<Account?> UpdateRefreshToken(RefreshToken oldRefreshToken, string id)
         {
-            Account? foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("User doesn't exist");
+            Account? foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
 
-            if (foundAccount.RefreshToken != oldRefreshToken) throw new AccountRefreshTokenException("Account token doesn't match request token");
+            if (foundAccount.RefreshToken!.Token != oldRefreshToken.Token) throw new AccountRefreshTokenException("Account token doesn't match request token");
 
             if (foundAccount.RefreshToken.Expires < DateTime.UtcNow) throw new AccountRefreshTokenException("Refresh tolen is expired");
 
@@ -94,6 +115,32 @@ namespace BLL.Implementation
             await _accountRepository.UpdateAsync(foundAccount);
 
             return foundAccount;
+        }
+
+        public async Task ResetPassword(string email)
+        {
+            Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
+            string newPassword = CreatePassword();
+            account.Password = newPassword;
+
+            await _accountRepository.UpdateAsync(account);
+
+            using var emailMessage = new MimeMessage();
+
+            emailMessage.From.Add(new MailboxAddress("Администрация сайта", "tosha1600@mail.ru"));
+            emailMessage.To.Add(new MailboxAddress("", email));
+            emailMessage.Subject = "Сброс пароля для Трекера настроения";
+            emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
+            {
+                Text = $"Для вашего аккаунта сброшен пароль. Новый пароль: {newPassword}"
+            };
+
+            using SmtpClient client = new();
+
+            await client.ConnectAsync("smtp.mail.ru", 465, true);
+            await client.AuthenticateAsync("tosha1600@mail.ru", "bbstt8QcZCznaPZ49k8M");
+            await client.SendAsync(emailMessage);
+            await client.DisconnectAsync(true);
         }
 
         public string GenerateJwtToken(Account user)
@@ -113,6 +160,23 @@ namespace BLL.Implementation
             string encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
 
             return encodedJwt;
+        }
+
+        private static string CreatePassword(int length=10)
+        {
+            const string symbols = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+            StringBuilder res = new();
+            while (0 < length--)
+            {
+                res.Append(symbols[RandomNumberGenerator.GetInt32(symbols.Length)]);
+            }
+            if (!AccountValidator.IsPasswordValid(res.ToString()))
+            {
+                res.Append(symbols[RandomNumberGenerator.GetInt32(0, 25)]);
+                res.Append(symbols[RandomNumberGenerator.GetInt32(26, 51)]);
+                res.Append(symbols[RandomNumberGenerator.GetInt32(52, symbols.Length)]);
+            }
+            return res.ToString();
         }
 
         private static RefreshToken GenerateRefreshToken()

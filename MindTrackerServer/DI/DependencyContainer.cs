@@ -13,6 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Reflection;
+using FluentValidation;
+using MindTrackerServer.Validators;
 
 namespace BLL.DI
 {
@@ -74,6 +76,8 @@ namespace BLL.DI
 
             services.AddTransient<IMoodMarksRepository, MoodMarksRepository>();
             services.AddTransient<IAccountRepository, AccountRepository>();
+
+            services.AddScoped<IValidator<Account>, AccountValidator>();
 
             services.AddTransient<IMoodMarksService, MoodMarksService>();
             services.AddTransient<IAccountService, AccountService>();

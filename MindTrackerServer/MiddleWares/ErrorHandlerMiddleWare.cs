@@ -27,14 +27,17 @@ namespace MindTrackerServer.MiddleWares
 
                 context.Response.StatusCode = error switch
                 {
-                    AccountNotFoundException => StatusCodes.Status401Unauthorized,
-                    AccountAlreadyExistsException => StatusCodes.Status422UnprocessableEntity,
-                    AccountIdMatchException => StatusCodes.Status400BadRequest,
+                    AccountNotFoundException => StatusCodes.Status404NotFound,
+                    AccountAlreadyExistsException => StatusCodes.Status409Conflict,
                     AccountRefreshTokenException => StatusCodes.Status400BadRequest,
+                    InvalidAccountException => StatusCodes.Status400BadRequest,
+                    DeleteMoodMarkException => StatusCodes.Status500InternalServerError,
+                    UpdateMoodMarkException => StatusCodes.Status500InternalServerError,
+                    MoodMarkNotFoundException => StatusCodes.Status400BadRequest,
                     _ => StatusCodes.Status500InternalServerError,
                 };
 
-                logger.LogError(message: error.Message);
+                logger.LogError(error.Message);
                 await response.WriteAsync(error.Message);
             }
         }

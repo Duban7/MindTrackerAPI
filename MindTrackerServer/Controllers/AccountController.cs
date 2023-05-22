@@ -84,21 +84,31 @@ namespace MindTrackerServer.Controllers
         }
 
         [HttpPut]
-        [Route("account/{id}")]
+        [Route("account")]
         [Authorize]
-        public async Task<ActionResult> UpdateAccount([FromBody] Account account, string id)
+        public async Task<ActionResult> UpdateAccount([FromBody] Account account)
         {
-            await _accountService.UpdateAccount(account, id);
+            await _accountService.UpdateAccount(account, GetAccountId());
 
             return NoContent();
         }
 
         [HttpDelete]
-        [Route("account/{id}")]
+        [Route("account")]
         [Authorize]
-        public async Task<ActionResult> DeleteAccount(string id)
+        public async Task<ActionResult> DeleteAccount()
         {
-            await _accountService.DeleteAccount(id);
+            await _accountService.DeleteAccount(GetAccountId());
+
+            return NoContent();
+        }
+
+        [HttpPost]
+        [Route("account/reset")]
+        [AllowAnonymous]
+        public async Task<ActionResult> ResetPassword([FromBody] string email)
+        {
+            await _accountService.ResetPassword(email);
 
             return NoContent();
         }

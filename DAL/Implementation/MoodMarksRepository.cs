@@ -6,7 +6,9 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,12 +32,12 @@ namespace DAL.Implementation
 
         public async Task<MoodMark> GetOneAsync(DateTime date, string accountId) =>
             await _moodMarksCollection
-                    .Find(x => x.AccountId == accountId && x.Date.Day == date.Day)
+                    .Find(GetDateAndAccountIdEqulsExpression(date, accountId))
                     .FirstOrDefaultAsync();
 
         public async Task<long> RemoveAsync(DateTime date, string accountId)
         {
-            var result =  await _moodMarksCollection.DeleteOneAsync(x => x.AccountId == accountId && x.Date.Day == date.Day);
+            var result =  await _moodMarksCollection.DeleteOneAsync(GetDateAndAccountIdEqulsExpression(date, accountId));
 
             return result.DeletedCount;
         }
@@ -47,7 +49,7 @@ namespace DAL.Implementation
 
             foreach(MoodMark moodMark in marksToUpdate)
             {
-                var filter = filterBuilder.Where(x => x.Date.Day == moodMark.Date.Day && x.Date.Month == moodMark.Date.Month && x.Date.Year == moodMark.Date.Year && x.AccountId == accountId);
+                var filter = filterBuilder.Where(GetDateAndAccountIdEqulsExpression(moodMark.Date, accountId));
                 updates.Add(new ReplaceOneModel<MoodMark>(filter, moodMark));
             }
 
@@ -80,11 +82,16 @@ namespace DAL.Implementation
 
         public async Task<long> UpdateAsync(MoodMark moodMark)
         {
-            moodMark.Id ??= ObjectId.GenerateNewId().ToString();
-
-            var result =  await _moodMarksCollection.ReplaceOneAsync(x=>x.AccountId == moodMark.AccountId && x.Date.Day == moodMark.Date.Day, moodMark);
+            var result =  await _moodMarksCollection.ReplaceOneAsync(GetDateAndAccountIdEqulsExpression(moodMark.Date, moodMark.AccountId!), moodMark);
         
             return result.ModifiedCount;
         }
+
+        private static Expression<Func<MoodMark, bool>> GetDateAndAccountIdEqulsExpression(DateTime date, string accountId) =>
+            x => 
+            x.Date.Day == date.Day 
+            && x.Date.Month == date.Month 
+            && x.Date.Year == date.Year 
+            && x.AccountId == accountId;
     }
 }

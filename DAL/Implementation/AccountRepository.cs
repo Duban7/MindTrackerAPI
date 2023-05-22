@@ -2,16 +2,20 @@
 using DAL.Abstraction;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Amazon.Runtime.Internal.Util;
+using Microsoft.Extensions.Logging;
 
 namespace DAL.Implementation
 {
     public class AccountRepository : IAccountRepository
     {
         private readonly IMongoCollection<Account> _accountCollection;
+        private readonly ILogger<AccountRepository> _logger;    
 
-        public AccountRepository(IMongoCollection<Account> userCollection)
+        public AccountRepository(IMongoCollection<Account> userCollection, ILogger<AccountRepository> logger)
         {
             _accountCollection = userCollection;
+            _logger = logger;
         }
         public async Task<Account?> GetOneByEmailAsync(string email) =>
           await _accountCollection.Find(regUser => regUser.Email == email).FirstOrDefaultAsync();
@@ -25,9 +29,11 @@ namespace DAL.Implementation
         public async Task CreateAsync(Account newUser) =>
             await _accountCollection.InsertOneAsync(newUser);
 
-        public async Task UpdateAsync(Account updatedUser) =>
-            await _accountCollection.ReplaceOneAsync(x => x.Id == updatedUser.Id, updatedUser);
-
+        public async Task UpdateAsync(Account updatedUser)
+        {
+            var res = await _accountCollection.ReplaceOneAsync(x => x.Id == updatedUser.Id, updatedUser);
+            _logger.LogDebug(res.MatchedCount+"|"+res.ModifiedCount);
+        }
         public async Task RemoveAsync(string id) =>
             await _accountCollection.DeleteOneAsync(x => x.Id == id);
 

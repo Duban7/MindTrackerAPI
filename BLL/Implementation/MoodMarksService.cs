@@ -40,7 +40,7 @@ namespace BLL.Implementation
         {
             long deletedCount = await _moodMarksRepository.RemoveAsync(date, accountId);
 
-            if (deletedCount < 1) throw new DeleteMoodMarkException("Nothing has been deleted");
+            if (deletedCount < 1) throw new MoodMarkNotFoundException("Mood mark was not found");
 
             if (deletedCount > 1) throw new DeleteMoodMarkException("More than needed has been deleted");
         }
@@ -63,7 +63,7 @@ namespace BLL.Implementation
             {
                 var oldMarks = currentMoodMarks.IntersectBy(marksToUpdate.Select(x => x.Date.ToShortDateString()), x => x.Date.ToShortDateString()).ToList();
 
-                if (marksToUpdate.Count != oldMarks.Count) throw new UpdateMoodMarkException("fuck"+ marksToUpdate.Count+" "+ oldMarks.Count);
+                if (marksToUpdate.Count != oldMarks.Count) throw new UpdateMoodMarkException("Marks to update count is invalid");
 
                 for(int i = 0; i<marksToUpdate.Count; i++) 
                 {
@@ -91,6 +91,9 @@ namespace BLL.Implementation
 
         public async Task UpdateOne(MoodMark moodMark, string accountId) 
         {
+            MoodMark oldMoodmark = await _moodMarksRepository.GetOneAsync(moodMark.Date, accountId) ?? throw new MoodMarkNotFoundException("MoodMark not found");
+
+            moodMark.Id = oldMoodmark.Id;
             moodMark.AccountId = accountId;
 
             long result =  await _moodMarksRepository.UpdateAsync(moodMark);
