@@ -2,7 +2,6 @@
 using DAL.Abstraction;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Amazon.Runtime.Internal.Util;
 using Microsoft.Extensions.Logging;
 
 namespace DAL.Implementation
