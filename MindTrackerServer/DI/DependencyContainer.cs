@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using FluentValidation;
 using MindTrackerServer.Validators;
+using System.Reflection;
 
 namespace BLL.DI
 {
@@ -108,6 +109,8 @@ namespace BLL.DI
                         Array.Empty<string>()
                     }
                 });
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                opt.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
             });
         }
     }
