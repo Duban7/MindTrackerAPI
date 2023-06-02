@@ -8,9 +8,9 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["MindTrackerServer.csproj", "."]
-COPY ["BLL/BLL.csproj", "BLL/"]
-COPY ["Contracts/Domain.csproj", "Contracts/"]
-COPY ["DAL/DAL.csproj", "DAL/"]
+COPY ["BLL/BLL.csproj", "."]
+COPY ["Contracts/Domain.csproj", "."]
+COPY ["DAL/DAL.csproj", "."]
 RUN dotnet restore "./MindTrackerServer.csproj"
 COPY . .
 WORKDIR "/src/."
