@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace MindTrackerServer.Validators
 {
+    //2 (2)
     public class AccountValidator: AbstractValidator<Account>
     {
         public AccountValidator() 

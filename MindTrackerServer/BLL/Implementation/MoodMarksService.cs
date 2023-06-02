@@ -12,7 +12,7 @@ namespace BLL.Implementation
     {
         private readonly IMoodMarksRepository _moodMarksRepository;
         private readonly ILogger<MoodMarksService> _logger;
-
+        //7+1 (20+1)
         public MoodMarksService(IMoodMarksRepository moodMarksRepository, ILogger<MoodMarksService> logger)
         {
             _moodMarksRepository = moodMarksRepository;
@@ -26,6 +26,7 @@ namespace BLL.Implementation
 
             await _moodMarksRepository.InsertAsync(moodMark);
         }
+
         public async Task DeleteAll(string accountId) =>
             await _moodMarksRepository.RemoveAllAsync(accountId);
 

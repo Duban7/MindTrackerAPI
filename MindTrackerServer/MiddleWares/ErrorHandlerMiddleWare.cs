@@ -3,6 +3,7 @@ using Domain.Exceptions;
 
 namespace MindTrackerServer.MiddleWares
 {
+    //2 (4)
     public class ErrorHandlerMiddleWare
     {
         private readonly RequestDelegate _next;

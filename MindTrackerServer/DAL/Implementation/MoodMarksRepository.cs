@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 
 namespace DAL.Implementation
 {
+    //11+1 (16+1)
     public class MoodMarksRepository : IMoodMarksRepository
     {
         private readonly IMongoCollection<MoodMark> _moodMarksCollection;
@@ -68,7 +69,6 @@ namespace DAL.Implementation
         public async Task InsertManyAsync(List<MoodMark> marksToInsert)=>
             await _moodMarksCollection.InsertManyAsync(marksToInsert);
         
-
         public async Task InsertAsync(MoodMark moodMark)=>
             await _moodMarksCollection.InsertOneAsync(moodMark);
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DAL.Implementation
 {
+    //8+1 (13+1)
     public class AccountRepository : IAccountRepository
     {
         private readonly IMongoCollection<Account> _accountCollection;

@@ -2,6 +2,7 @@
 
 namespace BLL.Jwt
 {
+    //1 (1)
     public class JwtOptions
     {
         public string? Issuer { get; set; } 

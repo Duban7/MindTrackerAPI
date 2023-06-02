@@ -6,6 +6,7 @@ using System.Security.Claims;
 
 namespace MindTrackerServer.Controllers
 {
+    //9 (10)
     [ApiController]
     [Route("")]
     public class AccountController : ControllerBase
@@ -44,7 +45,7 @@ namespace MindTrackerServer.Controllers
         {
             Account? foundAccount = await _accountService.LogIn(logInRequest);
 
-            if (foundAccount == null) return BadRequest();
+            //if (foundAccount == null) return BadRequest();
 
             var response = new
             {
@@ -62,7 +63,7 @@ namespace MindTrackerServer.Controllers
         {
             Account? account = await _accountService.UpdateRefreshToken(oldRefreshToken, id);
 
-            if (account == null) return BadRequest();
+          //  if (account == null) return BadRequest();
 
             var response = new
             {

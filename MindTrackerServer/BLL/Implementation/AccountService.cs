@@ -24,7 +24,7 @@ namespace BLL.Implementation
         private readonly JwtOptions _jwtOptions;
         private readonly ILogger<AccountService> _logger;
         private readonly IValidator<Account> _accountValidator;
-
+        //11+1 (23+1)
         public AccountService(IAccountRepository accountRepository,
                             IOptions<JwtOptions> jwtOptions,
                             ILogger<AccountService> logger,
@@ -35,6 +35,7 @@ namespace BLL.Implementation
             _logger = logger;
             _accountValidator = validator;
         }
+
         public async Task<Account?> CreateAccount(Account newAccount)
         {
             ValidationResult result = await _accountValidator.ValidateAsync(newAccount);
