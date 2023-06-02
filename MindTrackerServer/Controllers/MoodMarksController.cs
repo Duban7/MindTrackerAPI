@@ -21,7 +21,7 @@ namespace MindTrackerServer.Controllers
         }
 
         [HttpGet]
-        [Route("start")]
+        [Route("test")]
         public ActionResult Init()
         {
             return Ok("Well, now you can do some request");
