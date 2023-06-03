@@ -6,14 +6,20 @@ using System.Security.Claims;
 
 namespace MindTrackerServer.Controllers
 {
-    //9 (10)
+    /// <summary>
+    /// Account Controller
+    /// </summary>
     [ApiController]
     [Route("")]
     public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
         private readonly ILogger<AccountController> _logger;
-
+        /// <summary>
+        /// Main constructor
+        /// </summary>
+        /// <param name="accountService"></param>
+        /// <param name="logger"></param>
         public AccountController(IAccountService accountService, ILogger<AccountController> logger)
         {
             _accountService = accountService;
@@ -23,7 +29,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Сreates an account
         /// </summary>
-        /// <param name="newAccount"></param>
+        /// <param name="accountRequest"></param>
         /// <returns>jwt access token and newly created account</returns>
         /// <remarks>
         /// requires email and password
@@ -40,7 +46,7 @@ namespace MindTrackerServer.Controllers
         [HttpPost]
         [Route("account/new")]
         [ProducesResponseType(typeof(Account), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(String), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<ActionResult<object>> CreateAccount([FromBody] Account accountRequest)
         {
             Account? newAccount = await _accountService.CreateAccount(accountRequest);
@@ -61,7 +67,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Log-in to account
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="logInRequest"></param>
         /// <returns>jwt access token and found account</returns>
         /// <remarks>
         /// requires email and password
@@ -87,7 +93,7 @@ namespace MindTrackerServer.Controllers
 
             var response = new
             {
-                access_token = _accountService.GenerateJwtToken(foundAccount),
+                access_token = _accountService.GenerateJwtToken(foundAccount!),
                 account = foundAccount
             };
 
@@ -97,7 +103,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Updates an account
         /// </summary>
-        /// <param name="RefreshToken"></param>
+        /// <param name="oldRefreshToken"></param>
         /// <param name="id"></param>
         /// <returns>new jwt access token and refresh-token</returns>
         /// <remarks>
@@ -123,8 +129,8 @@ namespace MindTrackerServer.Controllers
 
             var response = new
             {
-                access_token = _accountService.GenerateJwtToken(account),
-                refresh_token = account.RefreshToken
+                access_token = _accountService.GenerateJwtToken(account!),
+                refresh_token = account!.RefreshToken
             };
 
             return Ok(response);
@@ -184,8 +190,6 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Deletes an account
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="id"></param>
         /// <remarks>
         /// Sample request:
         /// !!!Requset needs an authorization

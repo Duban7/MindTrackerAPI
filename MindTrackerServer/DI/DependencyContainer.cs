@@ -16,12 +16,19 @@ using System.Reflection;
 
 namespace BLL.DI
 {
-    //1 (7)
+    /// <summary>
+    /// 
+    /// </summary>
     public static class DependencyContainer
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="configuration"></param>
         public static void RegisterDependency(this IServiceCollection services, ConfigurationManager configuration)
         {
-            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerCloudDatabase"));
+            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerDatabase"));
             services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
 
             services.AddAuthorization();
@@ -62,6 +69,7 @@ namespace BLL.DI
             {
                 IMongoDatabase mongoDatabase = serviceProvider.GetService<IMongoDatabase>()!;
 
+                
                 return mongoDatabase.GetCollection<Account>("Accounts");
 
             });
@@ -72,14 +80,31 @@ namespace BLL.DI
                 return mongoDatabase.GetCollection<MoodMark>("MoodMarks");
 
             });
+            services.AddScoped<IMongoCollection<MoodActivity>>((serviceProvider) =>
+            {
+                IMongoDatabase mongoDatabase = serviceProvider.GetService<IMongoDatabase>()!;
+
+                return mongoDatabase.GetCollection<MoodActivity>("MoodActivities");
+
+            });
+            services.AddScoped<IMongoCollection<MoodGroup>>((serviceProvider) =>
+            {
+                IMongoDatabase mongoDatabase = serviceProvider.GetService<IMongoDatabase>()!;
+
+                return mongoDatabase.GetCollection<MoodGroup>("MoodGroups");
+
+            });
 
             services.AddTransient<IMoodMarksRepository, MoodMarksRepository>();
             services.AddTransient<IAccountRepository, AccountRepository>();
+            services.AddTransient<IMoodGroupRepository, MoodGroupRepository>();
+            services.AddTransient<IMoodActivityRepository, MoodActivityRepository>();
 
             services.AddScoped<IValidator<Account>, AccountValidator>();
 
             services.AddTransient<IMoodMarksService, MoodMarksService>();
             services.AddTransient<IAccountService, AccountService>();
+            services.AddTransient<IGroupSchemaService, GroupSchemaService>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();

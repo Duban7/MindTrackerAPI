@@ -1,21 +1,22 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver;
 
 namespace Domain.Models
 {
-    public class Account
+    public class MoodGroup
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
-        public string? Email { get; set; }
-        public string? Password { get; set; }
-        public RefreshToken? RefreshToken { get; set; }
+        public string? Name { get; set; }
 
         [BsonRepresentation(BsonType.ObjectId)]
-        public List<string>? Groups { get; set; }
+        public List<string>? Activities { get; set; }
 
         [BsonRepresentation(BsonType.ObjectId)]
-        public List<string>? Marks { get; set; }
+        public string? AccountId { get; set; }
+        public bool Visible { get; set; }
+        public int Order { get; set; }
     }
 }

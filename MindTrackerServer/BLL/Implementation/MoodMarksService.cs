@@ -42,9 +42,12 @@ namespace BLL.Implementation
         public async Task<List<MoodMark>> GetAllMoodMarks(string accountId) =>
             await _moodMarksRepository.GetAllAsync(accountId);
 
-        public async Task UpdateAll(List<MoodMark> moodMarks, string accoutnId)
+        public async Task<List<MoodMarkWithActivities>> GetAllMoodMarksWithActivities(string accountId)=>
+            await _moodMarksRepository.GetAllWithActivitiesAsync(accountId);
+
+        public async Task UpdateAll(List<MoodMark> moodMarks, string accountId)
         {
-            List<MoodMark> currentMoodMarks = await _moodMarksRepository.GetAllAsync(accoutnId);
+            List<MoodMark> currentMoodMarks = await _moodMarksRepository.GetAllAsync(accountId);
 
             List<MoodMark> marksToUpdate = moodMarks.IntersectBy(currentMoodMarks.Select(x => x.Date.ToShortDateString()), x => x.Date.ToShortDateString()).ToList();
             List<MoodMark> marksToDelete = currentMoodMarks.ExceptBy(moodMarks.Select(x => x.Date.ToShortDateString()), x => x.Date.ToShortDateString()).ToList();
@@ -62,9 +65,9 @@ namespace BLL.Implementation
                 for(int i = 0; i<marksToUpdate.Count; i++) 
                 {
                     marksToUpdate[i].Id = oldMarks[i].Id;
-                    marksToUpdate[i].AccountId = accoutnId;
+                    marksToUpdate[i].AccountId =accountId;
                 }
-                updatedMoodMarks = await _moodMarksRepository.UpdateManyAsync(marksToUpdate, accoutnId);
+                updatedMoodMarks = await _moodMarksRepository.UpdateManyAsync(marksToUpdate, accountId);
             }
 
             if (marksToDelete.Count > 0) deleteddMoodMarks = await _moodMarksRepository.RemoveManyAsync(marksToDelete);
@@ -74,7 +77,7 @@ namespace BLL.Implementation
                 foreach (MoodMark mark in marksToInsert)
                 {
                     mark.Id = ObjectId.GenerateNewId().ToString();
-                    mark.AccountId = accoutnId;
+                    mark.AccountId = accountId;
                 }
                 await _moodMarksRepository.InsertManyAsync(marksToInsert);
             }

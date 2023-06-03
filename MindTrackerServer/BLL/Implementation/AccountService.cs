@@ -15,22 +15,26 @@ using MailKit.Net.Smtp;
 using FluentValidation;
 using FluentValidation.Results;
 using MindTrackerServer.Validators;
+using DAL.Implementation;
 
 namespace BLL.Implementation
 {
     public class AccountService : IAccountService
     {
         private readonly IAccountRepository _accountRepository;
+        private readonly IMoodActivityRepository _moodActivityRepository;
         private readonly JwtOptions _jwtOptions;
         private readonly ILogger<AccountService> _logger;
         private readonly IValidator<Account> _accountValidator;
-        //11+1 (23+1)
+
         public AccountService(IAccountRepository accountRepository,
+                            IMoodActivityRepository moodActivityRepository,
                             IOptions<JwtOptions> jwtOptions,
                             ILogger<AccountService> logger,
                             IValidator<Account> validator)
         {
             _accountRepository = accountRepository;
+            _moodActivityRepository = moodActivityRepository;
             _jwtOptions = jwtOptions.Value;
             _logger = logger;
             _accountValidator = validator;
@@ -60,13 +64,34 @@ namespace BLL.Implementation
 
             if (user != null) throw new AccountAlreadyExistsException("Account is alread exists");
 
-            string id = _accountRepository.GenerateObjectID();
+            MoodGroup moodGroup = new()
+            {
+                Id = _accountRepository.GenerateObjectID(),
+                AccountId = newAccount.Id,
+                Name = "DefaultGroup",
+                Activities = new(),
+                Order = 0,
+                Visible = true
+            };
+
+            MoodActivity moodActivity = new()
+            {
+                Id = _accountRepository.GenerateObjectID(),
+                GroupId = moodGroup.Id,
+                Name = "defaultActivity",
+                IconName = "DefaultIcon"
+            };
+
+            moodGroup.Activities.Add(moodActivity.Id);
+
             Account createdAccount = new()
             {
-                Id = id,
+                Id = _accountRepository.GenerateObjectID(),
                 Email = newAccount.Email,
                 Password = newAccount.Password,
-                RefreshToken = GenerateRefreshToken()
+                RefreshToken = GenerateRefreshToken(),
+                Groups = new() {moodGroup.Id},
+                Marks = new()
             };
             
             await _accountRepository.CreateAsync(createdAccount);

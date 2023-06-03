@@ -2,11 +2,14 @@
 using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace MindTrackerServer.Controllers
 {
-    //9 (12)
+    /// <summary>
+    /// MoodMarksController
+    /// </summary>
     [ApiController]
     [Route("")]
     public class MoodMarksController: ControllerBase
@@ -14,6 +17,11 @@ namespace MindTrackerServer.Controllers
         private readonly IMoodMarksService _moodMarksService;
         private readonly ILogger<MoodMarksController> _logger;
 
+        /// <summary>
+        /// Main constructor
+        /// </summary>
+        /// <param name="moodMarksService"></param>
+        /// <param name="logger"></param>
         public MoodMarksController(IMoodMarksService moodMarksService, ILogger<MoodMarksController> logger)
         {
             _moodMarksService = moodMarksService;
@@ -29,12 +37,13 @@ namespace MindTrackerServer.Controllers
         ///
         /// </remarks>
         /// <response code="200">sends you very strange message</response>
-        [HttpGet]
+        [HttpPost]
         [Route("test")]
         [ProducesResponseType(typeof(String), StatusCodes.Status200OK)]
-        public ActionResult Test()
+        public async Task<ActionResult<object>> Test([FromBody] string id)
         {
-            return Ok("Well, now you can do some request");
+            //var a = await _moodMarksService.getOneByAct(id);
+            return Ok("asd");
         }
 
         /// <summary>
@@ -64,8 +73,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Updates all MoodMarks of account 
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="id"></param>
+        /// <param name="moodMarks"></param>
         /// <remarks>
         /// It deletes all moodmarks that were in db but was not mentioned there, updates all moodmarks that were in db and adds new moodmarks to db
         /// 
@@ -143,7 +151,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Adds one MoodMark to DB
         /// </summary>
-        /// <param name="MoodMark"></param>
+        /// <param name="moodMark"></param>
         /// <remarks>
         /// requires MoodMark
         /// Sample request:
@@ -181,7 +189,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Updates one MoodMark
         /// </summary>
-        /// <param name="MoodMark"></param>
+        /// <param name="moodMark"></param>
         /// <remarks>
         /// requires MoodMark
         /// Sample request:
@@ -219,8 +227,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Deletes one MoodMark
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="id"></param>
+        /// <param name="date"></param>
         /// <remarks>
         /// requires date of MoodMark
         /// Sample request:

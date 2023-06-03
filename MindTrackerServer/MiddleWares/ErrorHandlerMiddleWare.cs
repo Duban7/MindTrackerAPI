@@ -3,16 +3,25 @@ using Domain.Exceptions;
 
 namespace MindTrackerServer.MiddleWares
 {
-    //2 (4)
+    /// <summary>
+    /// ErrorHandlerMiddleWare
+    /// </summary>
     public class ErrorHandlerMiddleWare
     {
         private readonly RequestDelegate _next;
-
+        /// <summary>
+        /// main constructor
+        /// </summary>
+        /// <param name="next"></param>
         public ErrorHandlerMiddleWare(RequestDelegate next)
         {
             _next = next;
         }
-
+        /// <summary>
+        /// Invoke method
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public async Task Invoke(HttpContext context)
         {
             try

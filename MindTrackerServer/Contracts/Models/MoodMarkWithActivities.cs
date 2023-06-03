@@ -1,10 +1,9 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Driver;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
 
 namespace Domain.Models
 {
-    public class MoodMark
+    public class MoodMarkWithActivities
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -16,9 +15,7 @@ namespace Domain.Models
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime Date { get; set; }
         public int? Mood { get; set; }
-
-        [BsonRepresentation(BsonType.ObjectId)]
-        public List<string>? Activities { get; set; } 
+        public List<MoodActivity>? Activities { get; set; }
         public List<string>? Images { get; set; }
         public string? Note { get; set; }
     }
