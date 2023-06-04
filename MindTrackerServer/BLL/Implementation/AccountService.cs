@@ -23,18 +23,21 @@ namespace BLL.Implementation
     {
         private readonly IAccountRepository _accountRepository;
         private readonly IMoodActivityRepository _moodActivityRepository;
+        private readonly IMoodGroupRepository _moodGroupRepository;
         private readonly JwtOptions _jwtOptions;
         private readonly ILogger<AccountService> _logger;
         private readonly IValidator<Account> _accountValidator;
 
         public AccountService(IAccountRepository accountRepository,
                             IMoodActivityRepository moodActivityRepository,
+                            IMoodGroupRepository moodGroupRepository,
                             IOptions<JwtOptions> jwtOptions,
                             ILogger<AccountService> logger,
                             IValidator<Account> validator)
         {
             _accountRepository = accountRepository;
             _moodActivityRepository = moodActivityRepository;
+            _moodGroupRepository = moodGroupRepository;
             _jwtOptions = jwtOptions.Value;
             _logger = logger;
             _accountValidator = validator;
@@ -64,36 +67,17 @@ namespace BLL.Implementation
 
             if (user != null) throw new AccountAlreadyExistsException("Account is alread exists");
 
-            MoodGroup moodGroup = new()
-            {
-                Id = _accountRepository.GenerateObjectID(),
-                AccountId = newAccount.Id,
-                Name = "DefaultGroup",
-                Activities = new(),
-                Order = 0,
-                Visible = true
-            };
-
-            MoodActivity moodActivity = new()
-            {
-                Id = _accountRepository.GenerateObjectID(),
-                GroupId = moodGroup.Id,
-                Name = "defaultActivity",
-                IconName = "DefaultIcon"
-            };
-
-            moodGroup.Activities.Add(moodActivity.Id);
-
             Account createdAccount = new()
             {
                 Id = _accountRepository.GenerateObjectID(),
                 Email = newAccount.Email,
                 Password = newAccount.Password,
                 RefreshToken = GenerateRefreshToken(),
-                Groups = new() {moodGroup.Id},
                 Marks = new()
             };
-            
+
+            createdAccount.Groups = await CreateDefaultGroupsAndActivities(createdAccount.Id);
+
             await _accountRepository.CreateAsync(createdAccount);
 
             return createdAccount;
@@ -108,7 +92,18 @@ namespace BLL.Implementation
 
         public async Task DeleteAccount(string id)
         {
-            _ = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
+            Account foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
+
+            List<MoodGroup> moodGroups = await _moodGroupRepository.GetAllByAccountId(foundAccount.Id!);
+
+            foreach(MoodGroup moodGroup in moodGroups)
+            {
+                long removedActivities = await _moodActivityRepository.RemoveManyByIdsAsync(moodGroup.Activities!);
+
+                if (removedActivities != moodGroup.Activities!.Count) throw new Exception("Some activities were not removed");
+            }
+
+            await _moodGroupRepository.RemoveAllAsyncByAccountId(foundAccount.Id!);
 
             await _accountRepository.RemoveAsync(id);
         }
@@ -129,7 +124,7 @@ namespace BLL.Implementation
 
             if (foundAccount.RefreshToken!.Token != oldRefreshToken.Token) throw new AccountRefreshTokenException("Account token doesn't match request token");
 
-            if (foundAccount.RefreshToken.Expires < DateTime.UtcNow) throw new AccountRefreshTokenException("Refresh tolen is expired");
+            if (foundAccount.RefreshToken.Expires < DateTime.UtcNow) throw new AccountRefreshTokenException("Refresh token is expired");
 
             RefreshToken newRefreshToken = GenerateRefreshToken();
             foundAccount.RefreshToken = newRefreshToken;
@@ -209,6 +204,502 @@ namespace BLL.Implementation
                 Created = DateTime.UtcNow
             };
             return refreshToken;
+        }
+
+        private async Task<List<string>> CreateDefaultGroupsAndActivities(string accountId)
+        {
+
+            MoodGroup social = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "Совместные занятия",
+                Visible = true,
+                Order = 0
+            };
+            List<MoodActivity> socialActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = social.Id,
+                    Name = "семья",
+                    IconName = "family"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = social.Id,
+                    Name = "друзья",
+                    IconName = "friends"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = social.Id,
+                    Name = "возлюбленный",
+                    IconName = "beloved"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = social.Id,
+                    Name = "незнакомец",
+                    IconName = "stranger"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = social.Id,
+                    Name = "никто",
+                    IconName = "noOne"
+                },
+            };
+            social.Activities = socialActivities.Select(x => x.Id).ToList()!;
+
+            MoodGroup emotions = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "Эмоции",
+                Visible = true,
+                Order = 1
+            };
+            List<MoodActivity> emotionsActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "взволнованный",
+                    IconName = "excited"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "расслабленный",
+                    IconName = "relaxed"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "гордый",
+                    IconName = "proud"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "надеющийся",
+                    IconName = "hopeful"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "счастливый",
+                    IconName = "happy"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "восторженный",
+                    IconName = "enthusiastic"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "окрыленный",
+                    IconName = "butterflies"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "обновленный",
+                    IconName = "refreshed"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "мрачный",
+                    IconName = "gloomy"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "одинокий",
+                    IconName = "lonely"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "тревожный",
+                    IconName = "anxious"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "грустный",
+                    IconName = "sad"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "сердитый",
+                    IconName = "angry"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "усталый",
+                    IconName = "tired"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = emotions.Id,
+                    Name = "раздражённый",
+                    IconName = "annoyed"
+                }
+            };
+            emotions.Activities = emotionsActivities.Select(x => x.Id).ToList()!;
+
+            MoodGroup hobbies = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "Хобби",
+                Visible = true,
+                Order = 2
+            };
+            List<MoodActivity> hobbiesActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "кино и тв",
+                    IconName = "moviesAndTv"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "чтение",
+                    IconName = "reading"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "игры",
+                    IconName = "gaming"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "спорт",
+                    IconName = "exercise"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "прогулка",
+                    IconName = "takingAWalk"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "рисование",
+                    IconName = "painting"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "игра на инструменте",
+                    IconName = "instrumentPlaying"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = hobbies.Id,
+                    Name = "рукоделие",
+                    IconName = "crafts"
+                },
+            };
+            hobbies.Activities = hobbiesActivities.Select(x => x.Id).ToList()!;
+
+            MoodGroup weather = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "Погода",
+                Visible = false,
+                Order = 3
+            };
+            List<MoodActivity> weatherActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = weather.Id,
+                    Name = "солнечно",
+                    IconName = "sunny"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = weather.Id,
+                    Name = "дождь",
+                    IconName = "rainy"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = weather.Id,
+                    Name = "облачно",
+                    IconName = "cloudy"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = weather.Id,
+                    Name = "снег",
+                    IconName = "snowy"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = weather.Id,
+                    Name = "ветренно",
+                    IconName = "windy"
+                },
+            };
+            weather.Activities = weatherActivities.Select(x => x.Id).ToList()!;
+ 
+            MoodGroup food = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "Еда",
+                Visible = false,
+                Order = 4
+            };
+            List<MoodActivity> foodActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = food.Id,
+                    Name = "здоровая еда",
+                    IconName = "healthyFood"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = food.Id,
+                    Name = "вредная пища",
+                    IconName = "junkFood"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = food.Id,
+                    Name = "домашняя",
+                    IconName = "homeCooked"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = food.Id,
+                    Name = "ресторан",
+                    IconName = "restaurant"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = food.Id,
+                    Name = "доставка",
+                    IconName = "delivery"
+                },
+            };
+            food.Activities = foodActivities.Select(x => x.Id).ToList()!;
+
+            MoodGroup chores = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "Домашние дела",
+                Visible = false,
+                Order = 5
+            };
+            List<MoodActivity> choresActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = chores.Id,
+                    Name = "уборка",
+                    IconName = "cleaning"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = chores.Id,
+                    Name = "прачечная",
+                    IconName = "laundry"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = chores.Id,
+                    Name = "приготовление пищи",
+                    IconName = "cooking"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = chores.Id,
+                    Name = "уход за растениями",
+                    IconName = "plantCare"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = chores.Id,
+                    Name = "покупка продуктов",
+                    IconName = "groceryShopping"
+                },
+            };
+            chores.Activities = choresActivities.Select(x => x.Id).ToList()!;
+
+            MoodGroup beauty = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "Уход за собой",
+                Visible = false,
+                Order = 6
+            };
+            List<MoodActivity> beautyActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = beauty.Id,
+                    Name = "стрижка",
+                    IconName = "haircut"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = beauty.Id,
+                    Name = "маникюр",
+                    IconName = "manicure"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = beauty.Id,
+                    Name = "уход за кожей",
+                    IconName = "skincare"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = beauty.Id,
+                    Name = "макияж",
+                    IconName = "makeup"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = beauty.Id,
+                    Name = "массаж",
+                    IconName = "massage"
+                },
+            };
+            beauty.Activities = beautyActivities.Select(x => x.Id).ToList()!;
+
+            MoodGroup events = new()
+            {
+                Id = _moodGroupRepository.GenerateObjectId(),
+                AccountId = accountId,
+                Name = "События",
+                Visible = false,
+                Order = 7
+            };
+            List<MoodActivity> eventsActivities = new()
+            {
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = events.Id,
+                    Name = "кинотеатр",
+                    IconName = "cinema"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = events.Id,
+                    Name = "парк аттракционов",
+                    IconName = "amusementPark"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = events.Id,
+                    Name = "шопинг",
+                    IconName = "shopping"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = events.Id,
+                    Name = "пикник",
+                    IconName = "picnic"
+                },
+                new()
+                {
+                    Id = _moodActivityRepository.GenerateObjectId(),
+                    GroupId = events.Id,
+                    Name = "поездка",
+                    IconName = "travel"
+                },
+            };
+            events.Activities = eventsActivities.Select(x => x.Id).ToList()!;
+
+            List<MoodGroup> groups = new() {social, emotions, hobbies, weather, food, chores, beauty, events };
+            
+            List<MoodActivity> activities = new();
+            activities.AddRange(socialActivities);
+            activities.AddRange(emotionsActivities);
+            activities.AddRange(hobbiesActivities);
+            activities.AddRange(weatherActivities);
+            activities.AddRange(foodActivities);
+            activities.AddRange(choresActivities);
+            activities.AddRange(beautyActivities);
+            activities.AddRange(eventsActivities);
+
+            await _moodActivityRepository.InsertManyAsync(activities);
+            await _moodGroupRepository.InsertManyAsync(groups);
+
+            return groups.Select(x => x.Id).ToList()!;
         }
     }
 }

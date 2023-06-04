@@ -8,13 +8,14 @@ namespace DAL.Abstraction
         public Task<List<MoodMarkWithActivities>> GetAllWithActivitiesAsync(string accountId);
         public Task<List<MoodMark>> GetAllByActivityIdAsync(string moodActivityId);
         public Task RemoveAllAsync(string accountId);
-        public Task<long> UpdateManyAsync(List<MoodMark> moodMarks, string accountId);
+        public Task<long> UpdateManyAsync(List<MoodMark> moodMarks);
         public Task<long> RemoveManyAsync(List<MoodMark> moodMarks);
         public Task InsertManyAsync(List<MoodMark> moodMarks);
-        public Task<MoodMark> GetOneAsync(DateTime date, string accountId);
+        public Task<MoodMark> GetOneAsync(string id);
         public Task<MoodMark> GetOneByActivityIdAsync(string moodActivityId);
+        public Task<MoodMarkWithActivities> GetOneWithActivities(string moodMarkId);
         public Task InsertAsync(MoodMark moodMark);
         public Task<long> UpdateAsync(MoodMark moodMark);
-        public Task<long> RemoveAsync(DateTime date, string accountId);
+        public Task<long> RemoveAsync(string id);
     }
 }

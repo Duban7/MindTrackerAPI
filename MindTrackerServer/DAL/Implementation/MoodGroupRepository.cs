@@ -27,7 +27,7 @@ namespace DAL.Implementation
             var pipeline = new BsonDocument[]
             {
                 new BsonDocument("$match",
-                                     new BsonDocument("AccountId",new ObjectId("647b4b9b6a35ed7eea438f0b"))
+                                     new BsonDocument("AccountId",new ObjectId(accountId))
                                 ),
                 new BsonDocument("$lookup",
                                     new BsonDocument
@@ -60,6 +60,7 @@ namespace DAL.Implementation
             var groupsWithActivities = await _moodGroupcollection.Aggregate<MoodGroupWithActivities>(pipeline).ToListAsync();
             var groupsWithoutActivities = MoodGroupConverter.ConvertToMoodGroupWithActivitiesList(await _moodGroupcollection.Find(x => x.AccountId == accountId && x.Activities!.Count == 0).ToListAsync());
 
+            _logger.LogInformation(groupsWithActivities.Count.ToString());
             groupsWithActivities.AddRange(groupsWithoutActivities);
 
             return groupsWithActivities;

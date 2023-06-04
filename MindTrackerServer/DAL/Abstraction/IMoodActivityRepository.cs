@@ -11,7 +11,8 @@ namespace DAL.Abstraction
         public Task RemoveAsync(string id);
         public Task InsertManyAsync(List<MoodActivity> activitiesToInsert);
         public Task<long> UpdateManyAsync(List<MoodActivity> activitiesToupdate);
-        public Task<long> DeleteManyAsync(List<MoodActivity> activitiesToDelete);
+        public Task<long> RemoveManyAsync(List<MoodActivity> activitiesToDelete);
+        public Task<long> RemoveManyByIdsAsync(List<string> ids);
         public string GenerateObjectId();
     }
 }

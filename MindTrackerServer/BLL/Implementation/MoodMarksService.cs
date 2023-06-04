@@ -11,84 +11,70 @@ namespace BLL.Implementation
     public class MoodMarksService : IMoodMarksService
     {
         private readonly IMoodMarksRepository _moodMarksRepository;
+        private readonly IAccountRepository _accountRepository;
         private readonly ILogger<MoodMarksService> _logger;
-        //7+1 (20+1)
-        public MoodMarksService(IMoodMarksRepository moodMarksRepository, ILogger<MoodMarksService> logger)
+
+        public MoodMarksService(IMoodMarksRepository moodMarksRepository, IAccountRepository accountRepository, ILogger<MoodMarksService> logger)
         {
             _moodMarksRepository = moodMarksRepository;
+            _accountRepository = accountRepository;
             _logger = logger;
         }
 
-        public async Task InsertOne(MoodMark moodMark, string accountId)
+        public async Task<MoodMarkWithActivities> InsertOne(MoodMark moodMark, string accountId)
         {
             moodMark.Id = ObjectId.GenerateNewId().ToString();
             moodMark.AccountId = accountId;
 
             await _moodMarksRepository.InsertAsync(moodMark);
+
+            Account foundAccount = await _accountRepository.GetOneByIdAsync(accountId) ?? throw new AccountNotFoundException("Account was not found while adding new MoodMark");
+
+            foundAccount.Marks!.Add(moodMark.Id);
+
+            await _accountRepository.UpdateAsync(foundAccount);
+
+            MoodMarkWithActivities moodMarkWithActivities;
+
+            if (moodMark.Activities!.Count > 0)
+                moodMarkWithActivities = await _moodMarksRepository.GetOneWithActivities(moodMark.Id) ?? throw new MoodMarkNotFoundException("Added mark not found");
+            else
+                moodMarkWithActivities = new()
+                {
+                    Id = moodMark.Id,
+                    AccountId = moodMark.AccountId,
+                    Date = moodMark.Date,
+                    Mood = moodMark.Mood,
+                    Note = moodMark.Note,
+                    Images = moodMark.Images,
+                    Activities = new()
+                };
+
+            return moodMarkWithActivities;
         }
 
-        public async Task DeleteAll(string accountId) =>
-            await _moodMarksRepository.RemoveAllAsync(accountId);
-
-        public async Task DeleteOne(DateTime date, string accountId)
+        public async Task DeleteOne(string id, string accountId)
         {
-            long deletedCount = await _moodMarksRepository.RemoveAsync(date, accountId);
+            MoodMark moodMark = await _moodMarksRepository.GetOneAsync(id);
+            long deletedCount = await _moodMarksRepository.RemoveAsync(id);
 
             if (deletedCount < 1) throw new MoodMarkNotFoundException("Mood mark was not found");
 
             if (deletedCount > 1) throw new DeleteMoodMarkException("More than needed has been deleted");
-        }
 
-        public async Task<List<MoodMark>> GetAllMoodMarks(string accountId) =>
-            await _moodMarksRepository.GetAllAsync(accountId);
+            Account foundAccount = await _accountRepository.GetOneByIdAsync(accountId) ?? throw new AccountNotFoundException("Account was not found while adding new MoodMark");
+
+            foundAccount.Marks!.Remove(moodMark.Id!);
+
+            await _accountRepository.UpdateAsync(foundAccount);
+        }
 
         public async Task<List<MoodMarkWithActivities>> GetAllMoodMarksWithActivities(string accountId)=>
             await _moodMarksRepository.GetAllWithActivitiesAsync(accountId);
 
-        public async Task UpdateAll(List<MoodMark> moodMarks, string accountId)
+        public async Task<MoodMarkWithActivities> UpdateOne(MoodMark moodMark, string accountId) 
         {
-            List<MoodMark> currentMoodMarks = await _moodMarksRepository.GetAllAsync(accountId);
-
-            List<MoodMark> marksToUpdate = moodMarks.IntersectBy(currentMoodMarks.Select(x => x.Date.ToShortDateString()), x => x.Date.ToShortDateString()).ToList();
-            List<MoodMark> marksToDelete = currentMoodMarks.ExceptBy(moodMarks.Select(x => x.Date.ToShortDateString()), x => x.Date.ToShortDateString()).ToList();
-            List<MoodMark> marksToInsert = moodMarks.ExceptBy(currentMoodMarks.Select(x => x.Date.ToShortDateString()), x => x.Date.ToShortDateString()).ToList();
-
-            long updatedMoodMarks = 0;
-            long deleteddMoodMarks = 0;
-
-            if (marksToUpdate.Count > 0)
-            {
-                var oldMarks = currentMoodMarks.IntersectBy(marksToUpdate.Select(x => x.Date.ToShortDateString()), x => x.Date.ToShortDateString()).ToList();
-
-                if (marksToUpdate.Count != oldMarks.Count) throw new UpdateMoodMarkException("Marks to update count is invalid");
-
-                for(int i = 0; i<marksToUpdate.Count; i++) 
-                {
-                    marksToUpdate[i].Id = oldMarks[i].Id;
-                    marksToUpdate[i].AccountId =accountId;
-                }
-                updatedMoodMarks = await _moodMarksRepository.UpdateManyAsync(marksToUpdate, accountId);
-            }
-
-            if (marksToDelete.Count > 0) deleteddMoodMarks = await _moodMarksRepository.RemoveManyAsync(marksToDelete);
-
-            if (marksToInsert.Count > 0)
-            {
-                foreach (MoodMark mark in marksToInsert)
-                {
-                    mark.Id = ObjectId.GenerateNewId().ToString();
-                    mark.AccountId = accountId;
-                }
-                await _moodMarksRepository.InsertManyAsync(marksToInsert);
-            }
-
-            if (updatedMoodMarks != marksToUpdate.Count) throw new UpdateMoodMarkException("Updated MoodMarks count doesn't match count MoodMarks that has to be updated");
-            if (deleteddMoodMarks != marksToDelete.Count) throw new DeleteMoodMarkException("Deleted MoodMarks count doesn't match count MoodMarks that has to be deleted");
-        }
-
-        public async Task UpdateOne(MoodMark moodMark, string accountId) 
-        {
-            MoodMark oldMoodmark = await _moodMarksRepository.GetOneAsync(moodMark.Date, accountId) ?? throw new MoodMarkNotFoundException("MoodMark not found");
+            MoodMark oldMoodmark = await _moodMarksRepository.GetOneAsync(moodMark.Id!) ?? throw new MoodMarkNotFoundException("MoodMark not found");
 
             moodMark.Id = oldMoodmark.Id;
             moodMark.AccountId = accountId;
@@ -98,6 +84,24 @@ namespace BLL.Implementation
             if (result < 1) throw new UpdateMoodMarkException("Nothing has been updated");
 
             if (result > 1) throw new UpdateMoodMarkException("More than needed has been updated");
+
+            MoodMarkWithActivities moodMarkWithActivities;
+
+            if (moodMark.Activities!.Count > 0)
+                moodMarkWithActivities = await _moodMarksRepository.GetOneWithActivities(moodMark.Id!) ?? throw new MoodMarkNotFoundException("Added mark not found");
+            else
+                moodMarkWithActivities = new()
+                {
+                    Id = moodMark.Id,
+                    AccountId = moodMark.AccountId,
+                    Date = moodMark.Date,
+                    Mood = moodMark.Mood,
+                    Note = moodMark.Note,
+                    Images = moodMark.Images,
+                    Activities = new()
+                };
+
+            return moodMarkWithActivities;
         } 
     }
 }

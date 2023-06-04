@@ -34,18 +34,6 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("show/{id}")]
-        public ActionResult<BsonDocument> Show(string id)
-        {
-            return Ok(id);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPut]

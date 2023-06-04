@@ -51,10 +51,19 @@ namespace DAL.Implementation
             return result.MatchedCount;
         }
 
-        public async Task<long> DeleteManyAsync(List<MoodActivity> activitiesToDelete)
+        public async Task<long> RemoveManyAsync(List<MoodActivity> activitiesToDelete)
         {
             IEnumerable<string?> ids = activitiesToDelete.Select(x => x.Id);
 
+            FilterDefinition<MoodActivity> idsFilter = Builders<MoodActivity>.Filter.In(m => m.Id, ids);
+
+            var result = await _moodActivitycollection.DeleteManyAsync(idsFilter);
+
+            return result.DeletedCount;
+        }
+
+        public async Task<long> RemoveManyByIdsAsync(List<string> ids)
+        {
             FilterDefinition<MoodActivity> idsFilter = Builders<MoodActivity>.Filter.In(m => m.Id, ids);
 
             var result = await _moodActivitycollection.DeleteManyAsync(idsFilter);

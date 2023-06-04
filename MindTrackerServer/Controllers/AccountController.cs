@@ -1,8 +1,10 @@
 ﻿using BLL.Abstraction;
+using BLL.Implementation;
 using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Security.Principal;
 
 namespace MindTrackerServer.Controllers
 {
@@ -14,16 +16,22 @@ namespace MindTrackerServer.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
+        private readonly IMoodMarksService _moodMarksService;
+        private readonly IGroupSchemaService _groupSchemaService;
         private readonly ILogger<AccountController> _logger;
         /// <summary>
-        /// Main constructor
+        /// 
         /// </summary>
         /// <param name="accountService"></param>
+        /// <param name="groupSchemaService"></param>
         /// <param name="logger"></param>
-        public AccountController(IAccountService accountService, ILogger<AccountController> logger)
+        /// <param name="moodMarksService"></param>
+        public AccountController(IAccountService accountService,IGroupSchemaService groupSchemaService, ILogger<AccountController> logger, IMoodMarksService moodMarksService)
         {
             _accountService = accountService;
+            _groupSchemaService = groupSchemaService;
             _logger = logger;
+            _moodMarksService = moodMarksService;
         }
 
         /// <summary>
@@ -45,21 +53,30 @@ namespace MindTrackerServer.Controllers
         /// <response code="201">returns URI, access jwt token and account</response>
         [HttpPost]
         [Route("account/new")]
-        [ProducesResponseType(typeof(Account), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AccountWithData), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<ActionResult<object>> CreateAccount([FromBody] Account accountRequest)
         {
             Account? newAccount = await _accountService.CreateAccount(accountRequest);
 
-            _logger.LogInformation("Account created");
+            List<MoodGroupWithActivities> accountGroups = await _groupSchemaService.GetAllGroupsWithActivities(newAccount!.Id!);
+            List<MoodMarkWithActivities> accountMarks = await _moodMarksService.GetAllMoodMarksWithActivities(newAccount!.Id!);
+
+            AccountWithData newAccountWithData = new()
+            {
+                Id = newAccount.Id,
+                Email = newAccount.Email,
+                Password = "",
+                RefreshToken = newAccount.RefreshToken,
+                Groups = accountGroups,
+                Records = accountMarks,
+            };
 
             var response = new
             {
                 access_token = _accountService.GenerateJwtToken(newAccount!),
-                account = newAccount
+                account = newAccountWithData
             };
-
-            _logger.LogInformation("Token generated");
 
             return Created(Request.Host.ToString() + "/" + newAccount!.Id, response);
         }
@@ -83,18 +100,29 @@ namespace MindTrackerServer.Controllers
         /// <response code="200">returns access jwt token and account</response>
         [HttpPost]
         [Route("account/log-in")]
-        [ProducesResponseType(typeof(Account), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AccountWithData), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(String), StatusCodes.Status200OK)]
         public async Task<ActionResult<object>> LogIn([FromBody] Account logInRequest)
         {
             Account? foundAccount = await _accountService.LogIn(logInRequest);
 
-            //if (foundAccount == null) return BadRequest();
+            List<MoodGroupWithActivities> accountGroups = await _groupSchemaService.GetAllGroupsWithActivities(foundAccount!.Id!);
+            List<MoodMarkWithActivities> accountMarks = await _moodMarksService.GetAllMoodMarksWithActivities(foundAccount!.Id!);
+
+            AccountWithData foundAccountWithData = new()
+            {
+                Id = foundAccount.Id,
+                Email = foundAccount.Email,
+                Password = "",
+                RefreshToken = foundAccount.RefreshToken,
+                Groups = accountGroups,
+                Records = accountMarks,
+            };
 
             var response = new
             {
                 access_token = _accountService.GenerateJwtToken(foundAccount!),
-                account = foundAccount
+                account = foundAccountWithData  
             };
 
             return Ok(response);
@@ -195,10 +223,6 @@ namespace MindTrackerServer.Controllers
         /// !!!Requset needs an authorization
         /// 
         ///     DELETE /account
-        ///     {
-        ///         "email": "string",
-        ///         "password": "string"
-        ///     }
         ///
         /// </remarks>
         /// <response code="204">no content</response>

@@ -70,29 +70,65 @@ namespace DAL.Implementation
         public async Task RemoveAllAsync(string accountId) =>
             await _moodMarksCollection.DeleteManyAsync(Builders<MoodMark>.Filter.Where(x=>x.AccountId == accountId));
 
-        public async Task<MoodMark> GetOneAsync(DateTime date, string accountId) =>
-            await _moodMarksCollection
-                    .Find(GetDateAndAccountIdEqulsExpression(date, accountId))
-                    .FirstOrDefaultAsync();
+        public async Task<MoodMark> GetOneAsync(string id) =>
+            await _moodMarksCollection.Find(x=>x.Id==id).FirstOrDefaultAsync();
 
         public async Task<MoodMark> GetOneByActivityIdAsync(string moodActivityId) =>
             await _moodMarksCollection.Find(x => x.Activities!.Contains(moodActivityId)).FirstOrDefaultAsync();
 
-        public async Task<long> RemoveAsync(DateTime date, string accountId)
+        public async Task<MoodMarkWithActivities> GetOneWithActivities(string moodMarkId)
         {
-            var result =  await _moodMarksCollection.DeleteOneAsync(GetDateAndAccountIdEqulsExpression(date, accountId));
+            var pipeline = new List<BsonDocument>
+            {
+                new BsonDocument("$match",
+                new BsonDocument("_id",
+                new ObjectId(moodMarkId))),
+                new BsonDocument("$lookup",
+                new BsonDocument
+                    {
+                        { "from", "MoodActivities" },
+                        { "localField", "Activities" },
+                        { "foreignField", "_id" },
+                        { "as", "Activities" }
+                    }),
+                new BsonDocument("$unwind",
+                new BsonDocument("path", "$Activities")),
+                new BsonDocument("$group",
+                new BsonDocument
+                    {
+                        { "_id", "$_id" },
+                        { "AccountId",
+                new BsonDocument("$first", "$AccountId") },
+                        { "Date",
+                new BsonDocument("$first", "$Date") },
+                        { "Mood",
+                new BsonDocument("$first", "$Mood") },
+                        { "Activities",
+                new BsonDocument("$push", "$Activities") },
+                        { "Images",
+                new BsonDocument("$first", "$Images") },
+                        { "Note",
+                new BsonDocument("$first", "$Note") }
+                    })
+            };
+            return await _moodMarksCollection.Aggregate<MoodMarkWithActivities>(pipeline).FirstOrDefaultAsync();
+        }
+
+        public async Task<long> RemoveAsync(string id)
+        {
+            var result =  await _moodMarksCollection.DeleteOneAsync(x => x.Id == id);
 
             return result.DeletedCount;
         }
 
-        public async Task<long> UpdateManyAsync(List<MoodMark> marksToUpdate, string accountId)
+        public async Task<long> UpdateManyAsync(List<MoodMark> marksToUpdate)
         {
             var updates = new List<WriteModel<MoodMark>>();
             var filterBuilder = Builders<MoodMark>.Filter;
 
             foreach(MoodMark moodMark in marksToUpdate)
             {
-                var filter = filterBuilder.Where(GetDateAndAccountIdEqulsExpression(moodMark.Date, accountId));
+                var filter = filterBuilder.Where(x=>x.Id == moodMark.Id);
                 updates.Add(new ReplaceOneModel<MoodMark>(filter, moodMark));
             }
 
@@ -124,16 +160,9 @@ namespace DAL.Implementation
 
         public async Task<long> UpdateAsync(MoodMark moodMark)
         {
-            var result =  await _moodMarksCollection.ReplaceOneAsync(GetDateAndAccountIdEqulsExpression(moodMark.Date, moodMark.AccountId!), moodMark);
+            var result =  await _moodMarksCollection.ReplaceOneAsync(x=>x.Id == moodMark.Id, moodMark);
         
             return result.ModifiedCount;
         }
-
-        private static Expression<Func<MoodMark, bool>> GetDateAndAccountIdEqulsExpression(DateTime date, string accountId) =>
-            x => 
-            x.Date.Day == date.Day 
-            && x.Date.Month == date.Month 
-            && x.Date.Year == date.Year 
-            && x.AccountId == accountId;
     }
 }

@@ -66,7 +66,7 @@ namespace BLL.Implementation
 
                 if(deleteActivitiesForGroup.Count > 0)
                 {
-                    deletedAct = await _moodActivityRepository.DeleteManyAsync(deleteActivitiesForGroup);
+                    deletedAct = await _moodActivityRepository.RemoveManyAsync(deleteActivitiesForGroup);
                     foreach(MoodActivity moodActivity in deleteActivitiesForGroup)
                     {
                         List<MoodMark> moodMarksToUpdate = await _moodMarksRepository.GetAllByActivityIdAsync(moodActivity.Id ?? throw new UpdateGroupSchemaException($"Moodmark by {moodActivity.Name} from group {group.Name} that has to be deleted doesn't have an id"));
@@ -76,7 +76,7 @@ namespace BLL.Implementation
                             moodMark.Activities!.Remove(moodActivity.Id ?? throw new UpdateGroupSchemaException($"Moodmark by {moodActivity.Name} from group {group.Name} that has to be deleted doesn't have an id"));
                         }
 
-                        long updatedMarks = await _moodMarksRepository.UpdateManyAsync(moodMarksToUpdate, group.AccountId!);
+                        long updatedMarks = await _moodMarksRepository.UpdateManyAsync(moodMarksToUpdate);
 
                         if (updatedMarks != moodMarksToUpdate.Count) throw new UpdateGroupSchemaException("Updated Marks count doesn't match count of marks that has to be updated");
                     }
@@ -107,7 +107,7 @@ namespace BLL.Implementation
                 {
                     var activitiesToDelete = await _moodActivityRepository.GetActivitiesByIds(group.Activities);
 
-                    long deletedAct = await _moodActivityRepository.DeleteManyAsync(activitiesToDelete);
+                    long deletedAct = await _moodActivityRepository.RemoveManyAsync(activitiesToDelete);
 
                     foreach (MoodActivity moodActivity in activitiesToDelete)
                     {
@@ -120,7 +120,7 @@ namespace BLL.Implementation
 
                         if (moodMarksToUpdate.Count > 0)
                         {
-                            long updatedMarks = await _moodMarksRepository.UpdateManyAsync(moodMarksToUpdate, group.AccountId!);
+                            long updatedMarks = await _moodMarksRepository.UpdateManyAsync(moodMarksToUpdate);
 
                             if (updatedMarks != moodMarksToUpdate.Count) throw new UpdateGroupSchemaException("Updated Marks count doesn't match count of marks that has to be updated");
                         }
