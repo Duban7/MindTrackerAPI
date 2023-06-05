@@ -30,6 +30,7 @@ namespace BLL.DI
         {
             services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerDatabase"));
             services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
+            services.Configure<CloudinaryDotNet.Account>(configuration.GetSection("CloudinaryAccount"));
 
             services.AddAuthorization();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -105,6 +106,7 @@ namespace BLL.DI
             services.AddTransient<IMoodMarksService, MoodMarksService>();
             services.AddTransient<IAccountService, AccountService>();
             services.AddTransient<IGroupSchemaService, GroupSchemaService>();
+            services.AddTransient<ICloudinaryService, CloudinaryService>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();

@@ -2,6 +2,7 @@
 using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using System.Globalization;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -41,16 +42,22 @@ namespace MindTrackerServer.Controllers
         [HttpPost]
         [Route("test")]
         [ProducesResponseType(typeof(String), StatusCodes.Status200OK)]
-        public ActionResult Test()
+        [Authorize]
+        public async Task<ActionResult<MoodMarkWithActivities>> Test([FromForm] MoodMarkRequest moodMarkRequest)
         {
-            //var a = await _moodMarksService.getOneByAct(id);
-            return Ok("asd");
+            _logger.LogInformation(Request.Body.ToString());
+            _logger.LogCritical(Request.Form.ToString());
+            _logger.LogError(Request.Form.Count.ToString());
+
+            var res = await _moodMarksService.InsertOneWithImages(moodMarkRequest, GetAccountId());
+
+            return Ok(res);
         }
 
         /// <summary>
         /// Adds one MoodMark to DB
         /// </summary>
-        /// <param name="moodMark"></param>
+        /// <param name="moodMarkRequest"></param>
         /// <remarks>
         /// requires MoodMark
         /// Sample request:
@@ -58,18 +65,8 @@ namespace MindTrackerServer.Controllers
         /// 
         ///     POST /mood-mark
         ///     {
-        ///         "date": "2023-06-02T12:28:33.876Z",
-        ///         "mood": "fine",
-        ///         "activities": [
-        ///             {
-        ///                 "name": "finne",
-        ///                 "iconName": "fineicon.png"
-        ///             }
-        ///         ],
-        ///         "images": [
-        ///         "not implemented("
-        ///         ],
-        ///         "note": "meh"
+        ///         record = json record,
+        ///         newImages = [imageData1,imageData2]
         ///      },
         ///
         /// </remarks>
@@ -78,9 +75,9 @@ namespace MindTrackerServer.Controllers
         [Route("mood-mark")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [Authorize]
-        public async Task<ActionResult> InsertOne([FromBody] MoodMark moodMark)
+        public async Task<ActionResult<MoodMarkWithActivities>> InsertOne([FromForm] MoodMarkRequest moodMarkRequest)
         {
-            MoodMarkWithActivities newMoodMark = await _moodMarksService.InsertOne(moodMark, GetAccountId());
+            MoodMarkWithActivities newMoodMark = await _moodMarksService.InsertOneWithImages(moodMarkRequest, GetAccountId());
 
             return Created(Request.Host.ToString() + "/" + newMoodMark!.Id,newMoodMark);
         }
@@ -88,7 +85,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Updates one MoodMark
         /// </summary>
-        /// <param name="moodMark"></param>
+        /// <param name="moodMarkRequest"></param>
         /// <remarks>
         /// requires MoodMark
         /// Sample request:
@@ -96,18 +93,10 @@ namespace MindTrackerServer.Controllers
         /// 
         ///     PUT /mood-mark
         ///     {
-        ///         "date": "2023-06-02T12:28:33.876Z",
-        ///         "mood": "fine",
-        ///         "activities": [
-        ///             {
-        ///                 "name": "fine",
-        ///                 "iconName": "fineicon.png"
-        ///             }
-        ///         ],
-        ///         "images": [
-        ///         "not implemented("
-        ///         ],
-        ///         "note": "meh 2"
+        ///         record = json record,
+        ///         newImages = [imageData1,imageData2],
+        ///         images = [imageUrlTosave1, imageUrlToSave2],
+        ///         deletedimages = [imageUrlToDelete1, ImageUrlTodelete2]
         ///      },
         ///
         /// </remarks>
@@ -116,9 +105,9 @@ namespace MindTrackerServer.Controllers
         [Route("mood-mark")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [Authorize]
-        public async Task<ActionResult> UpdateOne([FromBody] MoodMark moodMark)
+        public async Task<ActionResult<MoodMarkWithActivities>> UpdateOne([FromForm] MoodMarkRequest moodMarkRequest)
         {
-            MoodMarkWithActivities moodMarkWithActivities = await _moodMarksService.UpdateOne(moodMark, GetAccountId());
+            MoodMarkWithActivities moodMarkWithActivities = await _moodMarksService.InsertOneWithImages(moodMarkRequest, GetAccountId());
 
             return Ok(moodMarkWithActivities);
         }
@@ -145,7 +134,7 @@ namespace MindTrackerServer.Controllers
         [Authorize]
         public async Task<ActionResult> DeleteOne([FromBody] string id)
         {
-            await _moodMarksService.DeleteOne(id, GetAccountId());
+            await _moodMarksService.DeleteOneWithImages(id, GetAccountId());
 
             return NoContent();
         }
