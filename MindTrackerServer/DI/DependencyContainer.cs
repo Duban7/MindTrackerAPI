@@ -28,7 +28,7 @@ namespace BLL.DI
         /// <param name="configuration"></param>
         public static void RegisterDependency(this IServiceCollection services, ConfigurationManager configuration)
         {
-            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerDatabase"));
+            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerCloudDatabase"));
             services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
             services.Configure<CloudinaryDotNet.Account>(configuration.GetSection("CloudinaryAccount"));
 
