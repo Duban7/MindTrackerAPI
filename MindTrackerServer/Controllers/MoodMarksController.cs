@@ -43,15 +43,9 @@ namespace MindTrackerServer.Controllers
         [Route("test")]
         [ProducesResponseType(typeof(String), StatusCodes.Status200OK)]
         [Authorize]
-        public async Task<ActionResult<MoodMarkWithActivities>> Test([FromForm] MoodMarkRequest moodMarkRequest)
+        public async Task<ActionResult> Test()
         {
-            _logger.LogInformation(Request.Body.ToString());
-            _logger.LogCritical(Request.Form.ToString());
-            _logger.LogError(Request.Form.Count.ToString());
-
-            var res = await _moodMarksService.InsertOneWithImages(moodMarkRequest, GetAccountId());
-
-            return Ok(res);
+            return Ok("Api works");
         }
 
         /// <summary>

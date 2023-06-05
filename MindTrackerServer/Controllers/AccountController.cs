@@ -20,7 +20,7 @@ namespace MindTrackerServer.Controllers
         private readonly IGroupSchemaService _groupSchemaService;
         private readonly ILogger<AccountController> _logger;
         /// <summary>
-        /// 
+        /// Main constructor
         /// </summary>
         /// <param name="accountService"></param>
         /// <param name="groupSchemaService"></param>
@@ -129,7 +129,7 @@ namespace MindTrackerServer.Controllers
         }
 
         /// <summary>
-        /// Updates an account
+        /// Updates an account tokens and sends them back
         /// </summary>
         /// <param name="oldRefreshToken"></param>
         /// <param name="id"></param>
