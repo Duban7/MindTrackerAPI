@@ -1,12 +1,10 @@
 ﻿using BLL.Abstraction;
-using CloudinaryDotNet.Actions;
 using DAL.Abstraction;
 using Domain.Exceptions;
 using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
-using MongoDB.Driver;
 using Newtonsoft.Json;
 
 namespace BLL.Implementation

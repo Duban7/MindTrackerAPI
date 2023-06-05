@@ -15,7 +15,6 @@ using MailKit.Net.Smtp;
 using FluentValidation;
 using FluentValidation.Results;
 using MindTrackerServer.Validators;
-using DAL.Implementation;
 
 namespace BLL.Implementation
 {
@@ -24,6 +23,7 @@ namespace BLL.Implementation
         private readonly IAccountRepository _accountRepository;
         private readonly IMoodActivityRepository _moodActivityRepository;
         private readonly IMoodGroupRepository _moodGroupRepository;
+        private readonly IMoodMarksRepository _moodMarkRepository;
         private readonly JwtOptions _jwtOptions;
         private readonly ILogger<AccountService> _logger;
         private readonly IValidator<Account> _accountValidator;
@@ -31,6 +31,7 @@ namespace BLL.Implementation
         public AccountService(IAccountRepository accountRepository,
                             IMoodActivityRepository moodActivityRepository,
                             IMoodGroupRepository moodGroupRepository,
+                            IMoodMarksRepository moodMarksRepository,
                             IOptions<JwtOptions> jwtOptions,
                             ILogger<AccountService> logger,
                             IValidator<Account> validator)
@@ -38,6 +39,7 @@ namespace BLL.Implementation
             _accountRepository = accountRepository;
             _moodActivityRepository = moodActivityRepository;
             _moodGroupRepository = moodGroupRepository;
+            _moodMarkRepository = moodMarksRepository;
             _jwtOptions = jwtOptions.Value;
             _logger = logger;
             _accountValidator = validator;
@@ -71,7 +73,7 @@ namespace BLL.Implementation
             {
                 Id = _accountRepository.GenerateObjectID(),
                 Email = newAccount.Email,
-                Password = newAccount.Password,
+                Password = PasswordHasher.HashPassword(newAccount.Password ?? throw new InvalidAccountException("no password for account")),
                 RefreshToken = GenerateRefreshToken(),
                 Marks = new()
             };
@@ -105,12 +107,16 @@ namespace BLL.Implementation
 
             await _moodGroupRepository.RemoveAllAsyncByAccountId(foundAccount.Id!);
 
+            await _moodMarkRepository.RemoveAllAsync(foundAccount.Id!);
+
             await _accountRepository.RemoveAsync(id);
         }
 
         public async Task<Account?> LogIn(Account logInAccount)
         {
-            Account? foundAccount = await _accountRepository.GetOneByEmailAndPasswordAsync(logInAccount.Email!, logInAccount.Password!);
+            Account? foundAccount = await _accountRepository.GetOneByEmailAsync(logInAccount.Email?? throw new InvalidAccountException("Email wasn't sent")) ?? throw new AccountNotFoundException("Account not found");
+
+            if (!PasswordHasher.VerifyPassword(logInAccount.Password ?? throw new InvalidAccountException("Password wasn't sent"), foundAccount!.Password!)) throw new InvalidAccountException("Wrong password");
 
             return foundAccount ?? throw new AccountNotFoundException("Account doesn't exist");
         }

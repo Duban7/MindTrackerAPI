@@ -12,6 +12,7 @@ var app = builder.Build();
 app.UseMiddleware<ErrorHandlerMiddleWare>();
 
 app.UseHttpsRedirection();
+app.UseCors();
 
 //if (app.Environment.IsDevelopment())
 //{
@@ -27,6 +28,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-//1 (1)
-//Total 71 (94)

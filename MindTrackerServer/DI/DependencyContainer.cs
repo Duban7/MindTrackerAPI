@@ -28,7 +28,20 @@ namespace BLL.DI
         /// <param name="configuration"></param>
         public static void RegisterDependency(this IServiceCollection services, ConfigurationManager configuration)
         {
-            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerCloudDatabase"));
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.WithOrigins("https://localhost",
+                                        "capacitor://localhost",
+                                        "ionic://localhost",
+                                        "http://localhost",
+                                        "http://localhost:8080",
+                                        "http://localhost:8100");
+                });
+            });
+
+            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerDatabase"));
             services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
             services.Configure<CloudinaryDotNet.Account>(configuration.GetSection("CloudinaryAccount"));
 

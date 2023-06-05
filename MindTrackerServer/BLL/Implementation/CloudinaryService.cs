@@ -1,9 +1,7 @@
-﻿using Amazon.Runtime.Internal.Util;
-using BLL.Abstraction;
+﻿using BLL.Abstraction;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace BLL.Implementation

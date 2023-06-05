@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using MongoDB.Driver;
 
 namespace Domain.Models
 {
