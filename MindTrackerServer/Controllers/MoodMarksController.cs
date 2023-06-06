@@ -83,7 +83,7 @@ namespace MindTrackerServer.Controllers
         [Authorize]
         public async Task<ActionResult<MoodMarkWithActivities>> UpdateOne([FromForm] MoodMarkRequest moodMarkRequest)
         {
-            MoodMarkWithActivities moodMarkWithActivities = await _moodMarksService.InsertOneWithImages(moodMarkRequest, GetAccountId());
+            MoodMarkWithActivities moodMarkWithActivities = await _moodMarksService.UpdateOneWithImages(moodMarkRequest);
 
             return Ok(moodMarkWithActivities);
         }
