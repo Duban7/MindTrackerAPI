@@ -31,24 +31,6 @@ namespace MindTrackerServer.Controllers
         }
 
         /// <summary>
-        /// testtesttest
-        /// </summary>
-        /// <remarks>
-        /// 
-        ///     just a test request
-        ///
-        /// </remarks>
-        /// <response code="200">sends you very strange message</response>
-        [HttpPost]
-        [Route("test")]
-        [ProducesResponseType(typeof(String), StatusCodes.Status200OK)]
-        [Authorize]
-        public async Task<ActionResult> Test()
-        {
-            return Ok("Api works");
-        }
-
-        /// <summary>
         /// Adds one MoodMark to DB
         /// </summary>
         /// <param name="moodMarkRequest"></param>

@@ -41,7 +41,7 @@ namespace BLL.DI
                 });
             });
 
-            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerDatabase"));
+            services.Configure<DatabaseSettings>(configuration.GetSection("MindTrackerCloudDatabase"));
             services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
             services.Configure<CloudinaryDotNet.Account>(configuration.GetSection("CloudinaryAccount"));
 
