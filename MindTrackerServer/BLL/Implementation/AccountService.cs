@@ -258,7 +258,7 @@ namespace BLL.Implementation
                     Id = _moodActivityRepository.GenerateObjectId(),
                     GroupId = social.Id,
                     Name = "никто",
-                    IconName = "noOne"
+                    IconName = "none"
                 },
             };
             social.Activities = socialActivities.Select(x => x.Id).ToList()!;
