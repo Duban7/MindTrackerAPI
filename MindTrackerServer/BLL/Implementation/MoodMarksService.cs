@@ -178,15 +178,16 @@ namespace BLL.Implementation
 
         public async Task<MoodMarkWithActivities> UpdateOneWithImages(MoodMarkRequest moodMarkRequest)
         {
-            MoodMark? record = JsonConvert.DeserializeObject<MoodMark>(moodMarkRequest!.Record!.ToString()!);
-
-            MoodMark moodMark = record ?? throw new MoodMarkNotFoundException("MoodMark wasn't sent");
+            List<string> Images = JsonConvert.DeserializeObject<List<string>>(moodMarkRequest!.Images!) ?? throw new Exception("Unable to read images");
+            List<string> DeletedImages = JsonConvert.DeserializeObject<List<string>>(moodMarkRequest!.DeletedImages!) ?? throw new Exception("Unable to read deleted images");
+            MoodMark moodMark = JsonConvert.DeserializeObject<MoodMark>(moodMarkRequest!.Record!.ToString()!) ?? throw new MoodMarkNotFoundException("MoodMark wasn't sent");
 
             _ = await _moodMarksRepository.GetOneAsync(moodMark.Id!) ?? throw new MoodMarkNotFoundException("MoodMark not found");
 
             moodMark.Images = new();
 
-            if (moodMarkRequest.Images?.Count != 0) moodMark.Images.AddRange(moodMarkRequest.Images!);
+            if (Images?.Count != 0)
+                moodMark.Images.AddRange(Images!);
            
 
             if (moodMarkRequest.NewImages?.Count > 0)
@@ -199,8 +200,8 @@ namespace BLL.Implementation
                 }
             }
 
-            if (moodMarkRequest.DeletedImages?.Count > 0)
-                foreach (string imageUrl in moodMark.Images)
+            if (DeletedImages?.Count > 0)
+                foreach (string imageUrl in DeletedImages)
                     await _cloudinaryService.DestroyAsycn(imageUrl);
 
             long result = await _moodMarksRepository.UpdateAsync(moodMark);
