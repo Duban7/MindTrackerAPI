@@ -49,19 +49,9 @@ namespace BLL.Implementation
             {
                 var oldActivitiesForGRoup = await _moodActivityRepository.GetAllByGroupid(group.Id ?? throw new UpdateGroupSchemaException($"Group: {group.Name} for account: {group.AccountId} doesn't have id"));
 
-                _logger.LogError(oldActivitiesForGRoup.ToJson());
-                _logger.LogCritical("--------------------------------------------");
-                var newActivitiesForGroup = group.Activities!.ExceptBy(oldActivitiesForGRoup.Select(x => x.Id), x => x.Id).ToList();//WARNING
+                var newActivitiesForGroup = group.Activities!.ExceptBy(oldActivitiesForGRoup.Select(x => x.Id), x => x.Id).ToList();
                 var deleteActivitiesForGroup = oldActivitiesForGRoup.ExceptBy(group.Activities!.Select(x => x.Id), x => x.Id).ToList();
                 var updateActivitiesForGroup = group.Activities!.IntersectBy(oldActivitiesForGRoup.Select(x => x.Id), x => x.Id).ToList();
-                _logger.LogInformation(newActivitiesForGroup.Count.ToString());
-                _logger.LogInformation(newActivitiesForGroup.Count.ToJson());
-                _logger.LogCritical("--------------------------------------------");
-                _logger.LogInformation(deleteActivitiesForGroup.Count.ToString());
-                _logger.LogInformation(deleteActivitiesForGroup.Count.ToJson());
-                _logger.LogCritical("--------------------------------------------");
-                _logger.LogInformation(updateActivitiesForGroup.Count.ToString());
-                _logger.LogInformation(updateActivitiesForGroup.Count.ToJson());
 
                 long updatedAct = 0, deletedAct = 0;
 
