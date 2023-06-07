@@ -1,5 +1,6 @@
 ﻿using BLL.Abstraction;
 using BLL.Implementation;
+using Domain.Exceptions;
 using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -153,12 +154,25 @@ namespace MindTrackerServer.Controllers
         {
             Account? account = await _accountService.UpdateRefreshToken(oldRefreshToken, id);
 
-          //  if (account == null) return BadRequest();
+            //  if (account == null) return BadRequest();
+
+            List<MoodGroupWithActivities> accountGroups = await _groupSchemaService.GetAllGroupsWithActivities(account!.Id!);
+            List<MoodMarkWithActivities> accountMarks = await _moodMarksService.GetAllMoodMarksWithActivities(account!.Id!);
+
+            AccountWithData foundAccountWithData = new()
+            {
+                Id = account.Id,
+                Email = account.Email,
+                Password = "",
+                RefreshToken = account.RefreshToken,
+                Groups = accountGroups,
+                Records = accountMarks,
+            };
 
             var response = new
             {
                 access_token = _accountService.GenerateJwtToken(account!),
-                refresh_token = account!.RefreshToken
+                account = foundAccountWithData
             };
 
             return Ok(response);
@@ -178,13 +192,27 @@ namespace MindTrackerServer.Controllers
         /// <response code="200">returns account</response>
         [HttpGet]
         [Route("account")]
-        [ProducesResponseType(typeof(Account), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AccountWithData), StatusCodes.Status200OK)]
         [Authorize]
-        public async Task<ActionResult> GetUser()
+        public async Task<ActionResult<AccountWithData>> GetAccount()
         {
-            Account? foundAccount = await _accountService.GetAccount(GetAccountId());
+            Account? foundAccount = await _accountService.GetAccount(GetAccountId()) ?? throw new AccountNotFoundException("Account not found");
 
-            return foundAccount == null ? BadRequest() : Ok(foundAccount);
+
+            List<MoodGroupWithActivities> accountGroups = await _groupSchemaService.GetAllGroupsWithActivities(foundAccount!.Id!);
+            List<MoodMarkWithActivities> accountMarks = await _moodMarksService.GetAllMoodMarksWithActivities(foundAccount!.Id!);
+
+            AccountWithData foundAccountWithData = new()
+            {
+                Id = foundAccount.Id,
+                Email = foundAccount.Email,
+                Password = "",
+                RefreshToken = foundAccount.RefreshToken,
+                Groups = accountGroups,
+                Records = accountMarks,
+            };
+
+            return Ok(foundAccountWithData);
         }
 
         /// <summary>
