@@ -37,7 +37,7 @@ namespace MindTrackerServer.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPut]
-        [Route("group-shema/update")]
+        [Route("group-schema/update")]
         [Authorize]
         public async Task<ActionResult<object>> UpdateGroupSchema([FromBody] GroupSchemaRequest request)
         {
