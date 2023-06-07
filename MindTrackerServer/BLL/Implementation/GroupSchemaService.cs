@@ -58,7 +58,10 @@ namespace BLL.Implementation
                 if (newActivitiesForGroup.Count > 0)
                 {
                     foreach (MoodActivity moodActivity in newActivitiesForGroup)
+                    {
                         moodActivity.Id = _moodActivityRepository.GenerateObjectId();
+                        moodActivity.GroupId = group.Id;
+                    }
                     await _moodActivityRepository.InsertManyAsync(newActivitiesForGroup);
                 }
 
