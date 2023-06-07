@@ -62,11 +62,13 @@ namespace BLL.Implementation
         public async Task<MoodMarkWithActivities> InsertOneWithImages(MoodMarkRequest moodMarkRequest, string accountId)
         {
             MoodMark? record = JsonConvert.DeserializeObject<MoodMark>(moodMarkRequest!.Record!.ToString()!);
+            
+            Account foundAccount = await _accountRepository.GetOneByIdAsync(accountId) ?? throw new AccountNotFoundException("Account was not found while adding new MoodMark");
 
             MoodMark moodMark = record ?? throw new MoodMarkNotFoundException("MoodMark wasn't sent");
 
             moodMark.Id = ObjectId.GenerateNewId().ToString();
-            moodMark.AccountId = accountId;
+            moodMark.AccountId = foundAccount.Id;
             moodMark.Images = new();
 
             if (moodMarkRequest.NewImages?.Count > 0)
@@ -80,9 +82,7 @@ namespace BLL.Implementation
             }
 
             await _moodMarksRepository.InsertAsync(moodMark);
-
-            Account foundAccount = await _accountRepository.GetOneByIdAsync(accountId) ?? throw new AccountNotFoundException("Account was not found while adding new MoodMark");
-
+           
             foundAccount.Marks!.Add(moodMark.Id);
 
             await _accountRepository.UpdateAsync(foundAccount);
