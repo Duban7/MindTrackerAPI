@@ -29,12 +29,12 @@ namespace BLL.Implementation
 
         public async Task<MoodMarkWithActivities> InsertOne(MoodMark moodMark, string accountId)
         {
+            Account foundAccount = await _accountRepository.GetOneByIdAsync(accountId) ?? throw new AccountNotFoundException("Account was not found while adding new MoodMark");
+
             moodMark.Id = ObjectId.GenerateNewId().ToString();
-            moodMark.AccountId = accountId;
+            moodMark.AccountId = foundAccount.Id;
 
             await _moodMarksRepository.InsertAsync(moodMark);
-
-            Account foundAccount = await _accountRepository.GetOneByIdAsync(accountId) ?? throw new AccountNotFoundException("Account was not found while adding new MoodMark");
 
             foundAccount.Marks!.Add(moodMark.Id);
 
