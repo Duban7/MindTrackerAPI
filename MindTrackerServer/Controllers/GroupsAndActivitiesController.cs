@@ -49,7 +49,7 @@ namespace MindTrackerServer.Controllers
                     if (request.CreatedGroups.Count > 0)
                         await _groupSchemaService.CreateGroups(request.CreatedGroups, GetAccountId());
 
-                _logger.LogInformation("null:" + (request.UpdatedGroups != null).ToString() + "-----" + "count:" + request.UpdatedGroups?.Count.ToString());
+                _logger.LogInformation("null:" + (request.UpdatedGroups?.Count) + "-----" + "count:" + request.UpdatedGroups?.Count.ToString());
                 if (request.UpdatedGroups != null)
                     if (request.UpdatedGroups.Count > 0)
                         await _groupSchemaService.UpdateGroups(request.UpdatedGroups);

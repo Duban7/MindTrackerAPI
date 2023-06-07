@@ -206,7 +206,7 @@ namespace BLL.Implementation
 
             long result = await _moodMarksRepository.UpdateAsync(moodMark);
 
-            if (result < 1) throw new UpdateMoodMarkException("Nothing has been updated");
+            //if (result < 1) throw new UpdateMoodMarkException("Nothing has been updated");
 
             if (result > 1) throw new UpdateMoodMarkException("More than needed has been updated");
 
