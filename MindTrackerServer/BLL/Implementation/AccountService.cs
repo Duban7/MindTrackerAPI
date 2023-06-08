@@ -143,9 +143,6 @@ namespace BLL.Implementation
         {
             Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
             string newPassword = CreatePassword();
-            account.Password = newPassword;
-
-            await _accountRepository.UpdateAsync(account);
 
             using var emailMessage = new MimeMessage();
 
@@ -163,6 +160,10 @@ namespace BLL.Implementation
             await client.AuthenticateAsync("tosha1600@mail.ru", "bbstt8QcZCznaPZ49k8M");
             await client.SendAsync(emailMessage);
             await client.DisconnectAsync(true);
+
+            account.Password = PasswordHasher.HashPassword(newPassword);
+
+            await _accountRepository.UpdateAsync(account);
         }
 
         public string GenerateJwtToken(Account user)
