@@ -15,6 +15,8 @@ using MailKit.Net.Smtp;
 using FluentValidation;
 using FluentValidation.Results;
 using MindTrackerServer.Validators;
+using Microsoft.AspNetCore.Identity;
+using BLL.Gmail;
 
 namespace BLL.Implementation
 {
@@ -25,6 +27,7 @@ namespace BLL.Implementation
         private readonly IMoodGroupRepository _moodGroupRepository;
         private readonly IMoodMarksRepository _moodMarkRepository;
         private readonly JwtOptions _jwtOptions;
+        private readonly GmailOptions _gmailOptions;
         private readonly ILogger<AccountService> _logger;
         private readonly IValidator<Account> _accountValidator;
 
@@ -33,6 +36,7 @@ namespace BLL.Implementation
                             IMoodGroupRepository moodGroupRepository,
                             IMoodMarksRepository moodMarksRepository,
                             IOptions<JwtOptions> jwtOptions,
+                            IOptions<GmailOptions> gmailOptions,
                             ILogger<AccountService> logger,
                             IValidator<Account> validator)
         {
@@ -41,6 +45,7 @@ namespace BLL.Implementation
             _moodGroupRepository = moodGroupRepository;
             _moodMarkRepository = moodMarksRepository;
             _jwtOptions = jwtOptions.Value;
+            _gmailOptions = gmailOptions.Value;
             _logger = logger;
             _accountValidator = validator;
         }
@@ -73,7 +78,7 @@ namespace BLL.Implementation
             {
                 Id = _accountRepository.GenerateObjectID(),
                 Email = newAccount.Email,
-                Password = PasswordHasher.HashPassword(newAccount.Password ?? throw new InvalidAccountException("no password for account")),
+                Password = Hasher.Hash(newAccount.Password ?? throw new InvalidAccountException("no password for account")),
                 RefreshToken = GenerateRefreshToken(),
                 Marks = new()
             };
@@ -116,7 +121,7 @@ namespace BLL.Implementation
         {
             Account? foundAccount = await _accountRepository.GetOneByEmailAsync(logInAccount.Email?? throw new InvalidAccountException("Email wasn't sent")) ?? throw new AccountNotFoundException("Account not found");
 
-            if (!PasswordHasher.VerifyPassword(logInAccount.Password ?? throw new InvalidAccountException("Password wasn't sent"), foundAccount!.Password!)) throw new InvalidAccountException("Wrong password");
+            if (!Hasher.Verify(logInAccount.Password ?? throw new InvalidAccountException("Password wasn't sent"), foundAccount!.Password!)) throw new InvalidAccountException("Wrong password");
 
             return foundAccount ?? throw new AccountNotFoundException("Account doesn't exist");
         }
@@ -139,16 +144,41 @@ namespace BLL.Implementation
             return foundAccount;
         }
 
-        public async Task ResetPassword(string email)
+        public async Task ResetPasswordQuery(string email)
         {
             Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
-            string newPassword = CreatePassword();
-
+            string idHash = Hasher.Hash(account.Id!) ?? throw new AccountIdMatchException("Account doesn't have id");
             using var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("Администрация сайта", "tosha1600@mail.ru"));
+            emailMessage.From.Add(new MailboxAddress("Администрация сайта", _gmailOptions.Email));
             emailMessage.To.Add(new MailboxAddress("", email));
-            emailMessage.Subject = "Сброс пароля для Трекера настроения";
+            emailMessage.Subject = "Попытка сброса пароля для MoodSun";
+            emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
+            {
+                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/reset-accepted?idHash={idHash}&email={email}"
+            };
+
+            using SmtpClient client = new();
+
+            await client.ConnectAsync(_gmailOptions.SMTP, _gmailOptions.Port, _gmailOptions.UseSSL);
+            await client.AuthenticateAsync(_gmailOptions.Email, _gmailOptions.Password);
+            await client.SendAsync(emailMessage);
+            await client.DisconnectAsync(true);
+        }
+
+        public async Task ResetPassword(string idHash, string email)
+        {
+            Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
+           
+            if (!Hasher.Verify(account.Id!, idHash)) throw new Exception("Hash of id doesn't match account id");
+            if (account.Email != email) throw new Exception("found email doesn't match sent email");
+
+            string newPassword = CreatePassword();
+            using var emailMessage = new MimeMessage();
+
+            emailMessage.From.Add(new MailboxAddress("Администрация сайта", _gmailOptions.Email));
+            emailMessage.To.Add(new MailboxAddress("", email));
+            emailMessage.Subject = "Сброс пароля для MoodSun";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
             {
                 Text = $"Для вашего аккаунта сброшен пароль. Новый пароль: {newPassword}"
@@ -156,16 +186,16 @@ namespace BLL.Implementation
 
             using SmtpClient client = new();
 
-            await client.ConnectAsync("smtp.mail.ru", 465, true);
-            await client.AuthenticateAsync("tosha1600@mail.ru", "bbstt8QcZCznaPZ49k8M");
+            await client.ConnectAsync(_gmailOptions.SMTP, _gmailOptions.Port, _gmailOptions.UseSSL);
+            await client.AuthenticateAsync(_gmailOptions.Email, _gmailOptions.Password);
             await client.SendAsync(emailMessage);
             await client.DisconnectAsync(true);
 
-            account.Password = PasswordHasher.HashPassword(newPassword);
+            account.Password = Hasher.Hash(newPassword);
 
             await _accountRepository.UpdateAsync(account);
-        }
 
+        }
         public string GenerateJwtToken(Account user)
         {
             List<Claim> claims = new()

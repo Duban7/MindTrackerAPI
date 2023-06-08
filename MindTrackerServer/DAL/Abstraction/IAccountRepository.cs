@@ -9,7 +9,6 @@ namespace DAL.Abstraction
         public Task UpdateAsync(Account updatedAccount);
         public Task RemoveAsync(string id);
         public Task<Account?> GetOneByEmailAsync(string email);
-        public Task<Account?> GetOneByEmailAndPasswordAsync(string email, string password);
         public string GenerateObjectID();
     }
 }

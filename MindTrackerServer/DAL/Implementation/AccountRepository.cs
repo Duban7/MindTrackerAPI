@@ -19,9 +19,6 @@ namespace DAL.Implementation
         public async Task<Account?> GetOneByEmailAsync(string email) =>
           await _accountCollection.Find(regUser => regUser.Email == email).FirstOrDefaultAsync();
 
-        public async Task<Account?> GetOneByEmailAndPasswordAsync(string email, string password) =>
-            await _accountCollection.Find(regUser => regUser.Email == email && regUser.Password == password).FirstOrDefaultAsync();
-
         public async Task<Account?> GetOneByIdAsync(string id) =>
             await _accountCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 

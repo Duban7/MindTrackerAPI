@@ -284,13 +284,36 @@ namespace MindTrackerServer.Controllers
         [Route("account/reset")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [AllowAnonymous]
-        public async Task<ActionResult> ResetPassword([FromBody] string email)
+        public async Task<ActionResult> ResetPasswordQuery([FromBody] string email)
         {
-            await _accountService.ResetPassword(email);
+            await _accountService.ResetPasswordQuery(email);
 
             return NoContent();
         }
 
+        /// <summary>
+        /// Resetes password of account and sends to email
+        /// </summary>
+        /// <param name="idHash"></param>
+        /// <param name="email"></param>
+        /// <remarks>
+        /// requires email and password
+        /// Sample request:
+        /// 
+        ///     POST /account/reset/{idHash}/email
+        ///
+        /// </remarks>
+        /// <response code="204">no content</response>
+        [HttpPost]
+        [Route("account/reset-accepted")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [AllowAnonymous]
+        public async Task<ActionResult> ResetPassword(string idHash, string email)
+        {
+            await _accountService.ResetPassword(idHash, email);
+
+            return NoContent();
+        }
         private string GetAccountId() =>
           this.User.Claims.First(i => i.Type == ClaimTypes.NameIdentifier).Value ?? throw new Exception("");
     }
