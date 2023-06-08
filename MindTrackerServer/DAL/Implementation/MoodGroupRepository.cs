@@ -59,7 +59,6 @@ namespace DAL.Implementation
             var groupsWithActivities = await _moodGroupcollection.Aggregate<MoodGroupWithActivities>(pipeline).ToListAsync();
             var groupsWithoutActivities = MoodGroupConverter.ConvertToMoodGroupWithActivitiesList(await _moodGroupcollection.Find(x => x.AccountId == accountId && x.Activities!.Count == 0).ToListAsync());
 
-            _logger.LogInformation(groupsWithActivities.Count.ToString());
             groupsWithActivities.AddRange(groupsWithoutActivities);
 
             return groupsWithActivities;
