@@ -304,8 +304,8 @@ namespace MindTrackerServer.Controllers
         ///
         /// </remarks>
         /// <response code="204">no content</response>
-        [HttpPost]
-        [Route("account/reset-accepted")]
+        [HttpGet]
+        [Route("account/reset")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [AllowAnonymous]
         public async Task<ActionResult> ResetPassword(string idHash, string email)
@@ -313,6 +313,8 @@ namespace MindTrackerServer.Controllers
             await _accountService.ResetPassword(idHash, email);
 
             return NoContent();
+
+
         }
         private string GetAccountId() =>
           this.User.Claims.First(i => i.Type == ClaimTypes.NameIdentifier).Value ?? throw new Exception("");
