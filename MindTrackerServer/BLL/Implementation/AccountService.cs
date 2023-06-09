@@ -147,8 +147,7 @@ namespace BLL.Implementation
         public async Task ResetPasswordQuery(string email)
         {
             Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
-            string idHash = Hasher.Hash(account.Id!) ?? throw new AccountIdMatchException("Account doesn't have id");
-            idHash.Replace("/", "slash");
+            string token = account.RefreshToken!.Token!.Replace("/", "slash")!.Replace("+","plus");
             using var emailMessage = new MimeMessage();
 
             emailMessage.From.Add(new MailboxAddress("Администрация сайта", _gmailOptions.Email));
@@ -156,7 +155,7 @@ namespace BLL.Implementation
             emailMessage.Subject = "Попытка сброса пароля для MoodSun";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
             {
-                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/account/reset?idHash={idHash}&email={email}"
+                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/account/reset?idHash={token}&email={email}"
             };
 
             using SmtpClient client = new();
@@ -167,11 +166,11 @@ namespace BLL.Implementation
             await client.DisconnectAsync(true);
         }
 
-        public async Task ResetPassword(string idHash, string email)
+        public async Task<bool> ResetPassword(string token, string email)
         {
             Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
-           
-            if (!Hasher.Verify(account.Id!, idHash.Replace("slash","/"))) throw new Exception("Hash of id doesn't match account id");
+
+            if (account.RefreshToken!.Token != token.Replace("slash", "/").Replace("plus","+")) return false;
             if (account.Email != email) throw new Exception("found email doesn't match sent email");
 
             string newPassword = CreatePassword();
@@ -193,9 +192,11 @@ namespace BLL.Implementation
             await client.DisconnectAsync(true);
 
             account.Password = Hasher.Hash(newPassword);
+            account.RefreshToken = GenerateRefreshToken();
 
             await _accountRepository.UpdateAsync(account);
 
+            return true;
         }
         public string GenerateJwtToken(Account user)
         {

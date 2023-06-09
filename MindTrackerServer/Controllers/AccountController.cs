@@ -310,11 +310,13 @@ namespace MindTrackerServer.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> ResetPassword(string idHash, string email)
         {
-            await _accountService.ResetPassword(idHash, email);
+            string cssContent = System.IO.File.ReadAllText("./web/styles.html");
 
-            return NoContent();
+            if ( await _accountService.ResetPassword(idHash, email))  return Content($"<html><head>{cssContent}<meta charset=\"UTF-8\"></head> <body> <div class=\"content\"> <h1>Восстановление пароля</h1> <div class=\"info\"> <h2>Мы отправим новый пароль на адрес:</h2> <h2 class=\"email\">{email}</h2> </div> <button onclick=\"window.close();\">Закрыть окно</button> </div> </body> </html>",
+                "text/html");
 
-
+            return Content($"<html><head>{cssContent}<meta charset=\"UTF-8\"></head> <body> <div class=\"content\"> <h1>Ссылка недействительна</h1> <div class=\"info\"> <h2>Данная ссылка недействительна.</h2> <h2>Пароль не был изменен.</h2> </div> <button onclick=\"window.close();\">Закрыть окно</button> </div> </body> </html>"
+                , "text/html");
         }
         private string GetAccountId() =>
           this.User.Claims.First(i => i.Type == ClaimTypes.NameIdentifier).Value ?? throw new Exception("");
