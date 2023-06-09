@@ -150,7 +150,7 @@ namespace BLL.Implementation
             string token = account.RefreshToken!.Token!.Replace("/", "slash")!.Replace("+","plus");
             using var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("Администрация сайта", _gmailOptions.Email));
+            emailMessage.From.Add(new MailboxAddress("Солнышко ☀", _gmailOptions.Email));
             emailMessage.To.Add(new MailboxAddress("", email));
             emailMessage.Subject = "Попытка сброса пароля для MoodSun";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
