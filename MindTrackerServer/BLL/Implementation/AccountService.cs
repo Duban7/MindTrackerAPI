@@ -148,6 +148,7 @@ namespace BLL.Implementation
         {
             Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
             string idHash = Hasher.Hash(account.Id!) ?? throw new AccountIdMatchException("Account doesn't have id");
+            idHash.Replace("/", "slash");
             using var emailMessage = new MimeMessage();
 
             emailMessage.From.Add(new MailboxAddress("Администрация сайта", _gmailOptions.Email));
@@ -155,7 +156,7 @@ namespace BLL.Implementation
             emailMessage.Subject = "Попытка сброса пароля для MoodSun";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
             {
-                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/reset?idHash={idHash}&email={email}"
+                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/account/reset?idHash={idHash}&email={email}"
             };
 
             using SmtpClient client = new();
@@ -170,7 +171,7 @@ namespace BLL.Implementation
         {
             Account account = await _accountRepository.GetOneByEmailAsync(email) ?? throw new AccountNotFoundException("Account with this email doesn't exist");
            
-            if (!Hasher.Verify(account.Id!, idHash)) throw new Exception("Hash of id doesn't match account id");
+            if (!Hasher.Verify(account.Id!, idHash.Replace("slash","/"))) throw new Exception("Hash of id doesn't match account id");
             if (account.Email != email) throw new Exception("found email doesn't match sent email");
 
             string newPassword = CreatePassword();
