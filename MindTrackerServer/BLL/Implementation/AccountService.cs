@@ -155,7 +155,7 @@ namespace BLL.Implementation
             emailMessage.Subject = "Попытка сброса пароля для MoodSun";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
             {
-                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/reset-accepted?idHash={idHash}&email={email}"
+                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/reset?idHash={idHash}&email={email}"
             };
 
             using SmtpClient client = new();
