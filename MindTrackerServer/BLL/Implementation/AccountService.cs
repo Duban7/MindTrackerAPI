@@ -94,6 +94,8 @@ namespace BLL.Implementation
         {
             Account foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
 
+            if (!AccountValidator.IsPasswordValid(request.NewPassword!)) throw new InvalidAccountException("Invalid Password");
+
             if (!Hasher.Verify(request.OldPassword ?? throw new WrongPasswordException("Old password wasn't sent"), foundAccount.Password!)) throw new WrongPasswordException("Wrong password");
 
             foundAccount.Password = Hasher.Hash(request.NewPassword ?? throw new WrongPasswordException("New password wasn't sent"));
