@@ -15,7 +15,6 @@ using MailKit.Net.Smtp;
 using FluentValidation;
 using FluentValidation.Results;
 using MindTrackerServer.Validators;
-using Microsoft.AspNetCore.Identity;
 using BLL.Gmail;
 
 namespace BLL.Implementation
@@ -93,7 +92,7 @@ namespace BLL.Implementation
         public async Task UpdateAccount(UpdateAccountRequest request, string id)
         {
             Account foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
-            
+          
             if (!Hasher.Verify(request.OldPassword ?? throw new WrongPasswordException("Old password wasn't sent"), foundAccount.Password!)) throw new WrongPasswordException("Wrong old password");
             
             if (request.NewPassword != null)
@@ -103,9 +102,16 @@ namespace BLL.Implementation
                 foundAccount.Password = Hasher.Hash(request.NewPassword ?? throw new WrongPasswordException("New password wasn't sent"));
             }
 
-            if (request.NewEmail != null) foundAccount.Email = request.NewEmail;
+            if (request.NewEmail != null)
+            {
+                if (!AccountValidator.IsEmailValid(request.NewEmail)) throw new InvalidAccountException("Invalid email");
 
-            if (!_accountValidator.Validate(foundAccount).IsValid) throw new InvalidAccountException("Invalid email");
+                Account? accountWithNewEmail = await _accountRepository.GetOneByEmailAsync(request.NewEmail);
+
+                if (accountWithNewEmail != null) throw new AccountAlreadyExistsException("Account with this email already exists");
+
+                foundAccount.Email = request.NewEmail;
+            }
 
             await _accountRepository.UpdateAsync(foundAccount);
         }

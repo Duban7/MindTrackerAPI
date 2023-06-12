@@ -21,5 +21,8 @@ namespace MindTrackerServer.Validators
 
         public static bool IsPasswordValid(string password) =>
             Regex.IsMatch(password, @"(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])[0-9a-zA-Z_\-]{8,20}");
+
+        public static bool IsEmailValid(string email) =>
+            Regex.IsMatch(email, @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
     }
 }
