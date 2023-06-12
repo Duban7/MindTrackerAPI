@@ -44,6 +44,7 @@ namespace MindTrackerServer.MiddleWares
                     DeleteMoodMarkException => StatusCodes.Status500InternalServerError,
                     UpdateMoodMarkException => StatusCodes.Status500InternalServerError,
                     MoodMarkNotFoundException => StatusCodes.Status400BadRequest,
+                    WrongPasswordException => StatusCodes.Status400BadRequest,
                     _ => StatusCodes.Status500InternalServerError,
                 };
 

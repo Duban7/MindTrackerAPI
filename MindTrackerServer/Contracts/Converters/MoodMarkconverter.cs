@@ -2,7 +2,7 @@
 
 namespace Domain.Converters
 {
-    public static class MoodMarkconverter
+    public static class MoodMarkConverter
     {
         /// <summary>
         /// Converts list of MoodMark to list of MoodMarkWithActivities.

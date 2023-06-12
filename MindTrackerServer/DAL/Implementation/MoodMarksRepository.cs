@@ -56,7 +56,7 @@ namespace DAL.Implementation
                     })
             };
             var groupsWithActivities = await _moodMarksCollection.Aggregate<MoodMarkWithActivities>(pipeline).ToListAsync();
-            var groupsWithoutActivities = MoodMarkconverter.ConvertToMoodMarksWithClearActivities(await _moodMarksCollection.Find(x => x.AccountId == accountId && x.Activities!.Count == 0).ToListAsync());
+            var groupsWithoutActivities = MoodMarkConverter.ConvertToMoodMarksWithClearActivities(await _moodMarksCollection.Find(x => x.AccountId == accountId && x.Activities!.Count == 0).ToListAsync());
 
             groupsWithActivities.AddRange(groupsWithoutActivities);
 

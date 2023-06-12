@@ -90,11 +90,17 @@ namespace BLL.Implementation
             return createdAccount;
         }
 
-        public async Task UpdateAccount(Account account, string id)
+        public async Task UpdateAccount(UpdateAccountRequest request, string id)
         {
-            _ = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
+            Account foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
 
-            await _accountRepository.UpdateAsync(account);
+            if (!Hasher.Verify(request.OldPassword ?? throw new WrongPasswordException("Old password wasn't sent"), foundAccount.Password!)) throw new WrongPasswordException("Wrong password");
+
+            foundAccount.Password = Hasher.Hash(request.NewPassword ?? throw new WrongPasswordException("New password wasn't sent"));
+            
+            if(request.NewEmail != null) foundAccount.Email = request.NewEmail;
+
+            await _accountRepository.UpdateAsync(foundAccount);
         }
 
         public async Task DeleteAccount(string id)
@@ -155,7 +161,7 @@ namespace BLL.Implementation
             emailMessage.Subject = "Попытка сброса пароля для MoodSun";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)
             {
-                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/account/reset?idHash={token}&email={email}"
+                Text = $"Попытка сбросить пароль, для подтверждения перейдите по ссылке: https://sunmoodapi.onrender.com/account/reset?token={token}&email={email}"
             };
 
             using SmtpClient client = new();
@@ -176,7 +182,7 @@ namespace BLL.Implementation
             string newPassword = CreatePassword();
             using var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("Администрация сайта", _gmailOptions.Email));
+            emailMessage.From.Add(new MailboxAddress("Солнышко ☀", _gmailOptions.Email));
             emailMessage.To.Add(new MailboxAddress("", email));
             emailMessage.Subject = "Сброс пароля для MoodSun";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain)

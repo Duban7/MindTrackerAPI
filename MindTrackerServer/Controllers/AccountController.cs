@@ -218,7 +218,7 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Updates an account
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="request"></param>
         /// <remarks>
         /// requires email and password
         /// Sample request:
@@ -226,8 +226,9 @@ namespace MindTrackerServer.Controllers
         /// 
         ///     PUT /account
         ///     {
-        ///         "email": "string",
-        ///         "password": "string"
+        ///         "NewEmail": "string",
+        ///         "OldPassword": "string",
+        ///         "NewPassword":"string"
         ///     }
         ///
         /// </remarks>
@@ -236,9 +237,9 @@ namespace MindTrackerServer.Controllers
         [Route("account")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [Authorize]
-        public async Task<ActionResult> UpdateAccount([FromBody] Account account)
+        public async Task<ActionResult> UpdateAccount([FromBody] UpdateAccountRequest request)
         {
-            await _accountService.UpdateAccount(account, GetAccountId());
+            await _accountService.UpdateAccount(request, GetAccountId());
 
             return NoContent();
         }
@@ -294,13 +295,13 @@ namespace MindTrackerServer.Controllers
         /// <summary>
         /// Resetes password of account and sends to email
         /// </summary>
-        /// <param name="idHash"></param>
+        /// <param name="token"></param>
         /// <param name="email"></param>
         /// <remarks>
         /// requires email and password
         /// Sample request:
         /// 
-        ///     POST /account/reset/{idHash}/email
+        ///     POST /account/reset/?token=<token>&email=<email>
         ///
         /// </remarks>
         /// <response code="204">no content</response>
@@ -308,11 +309,11 @@ namespace MindTrackerServer.Controllers
         [Route("account/reset")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [AllowAnonymous]
-        public async Task<ActionResult> ResetPassword(string idHash, string email)
+        public async Task<ActionResult> ResetPassword(string token, string email)
         {
             string cssContent = "<style>*{padding:0;margin:0;font-family:\"Averta\";}body{display:flex;height:100vh;justify-content:center;align-items:center;background-color:#f3f4f7;}.content{display:flex;height:30%;width:80%;flex-direction:column;justify-content:center;align-items:center;background-color:white;border-radius:6%;box-shadow:0px10px17px3pxrgba(106,107,109,0.2);gap:50px;}.info{display:flex;flex-direction:column;height:20%;width:100%;align-items:center;gap:5px;}h1{font-size:56px;}h2{font-size:30px;font-weight:300;}button{background-color:#9f82ba;color:white;height:15%;width:60%;font-size:30px;display:flex;align-items:center;justify-content:center;border-radius:25px;}@media(max-width:768px){.content{width:80%;height:40%;}}@media(min-width:1240px){.content{width:30%;height:50%;}h1{font-size:36px;}h2{font-size:26px;}button{font-size:26px;}}</style>";
 
-            if ( await _accountService.ResetPassword(idHash, email))  return Content($"<html><head>{cssContent}<meta charset=\"UTF-8\"></head><body><div class=\"content\"><h1>Восстановление пароля</h1><div class=\"info\"><h2>Мы отправим новый пароль на адрес:</h2><h2 class=\"email\">{email}</h2></div><button onclick=\"window.close();\">Закрыть окно</button></div></body></html>",
+            if ( await _accountService.ResetPassword(token, email))  return Content($"<html><head>{cssContent}<meta charset=\"UTF-8\"></head><body><div class=\"content\"><h1>Восстановление пароля</h1><div class=\"info\"><h2>Мы отправим новый пароль на адрес:</h2><h2 class=\"email\">{email}</h2></div><button onclick=\"window.close();\">Закрыть окно</button></div></body></html>",
                 "text/html");
 
             return Content($"<html><head>{cssContent}<meta charset=\"UTF-8\"></head><body><div class=\"content\"><h1>Ссылка недействительна</h1><div class=\"info\"><h2>Данная ссылка недействительна.</h2><h2>Пароль не был изменен.</h2></div><button onclick=\"window.close();\">Закрыть окно</button></div></body></html>"
