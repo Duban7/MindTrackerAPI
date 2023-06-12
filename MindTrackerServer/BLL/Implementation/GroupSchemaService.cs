@@ -71,15 +71,17 @@ namespace BLL.Implementation
                     foreach(MoodActivity moodActivity in deleteActivitiesForGroup)
                     {
                         List<MoodMark> moodMarksToUpdate = await _moodMarksRepository.GetAllByActivityIdAsync(moodActivity.Id ?? throw new UpdateGroupSchemaException($"Moodmark by {moodActivity.Name} from group {group.Name} that has to be deleted doesn't have an id"));
-                    
-                        foreach(MoodMark moodMark in moodMarksToUpdate)
+                        if (moodMarksToUpdate.Count > 0)
                         {
-                            moodMark.Activities!.Remove(moodActivity.Id ?? throw new UpdateGroupSchemaException($"Moodmark by {moodActivity.Name} from group {group.Name} that has to be deleted doesn't have an id"));
+                            foreach (MoodMark moodMark in moodMarksToUpdate)
+                            {
+                                moodMark.Activities!.Remove(moodActivity.Id ?? throw new UpdateGroupSchemaException($"Moodmark by {moodActivity.Name} from group {group.Name} that has to be deleted doesn't have an id"));
+                            }
+
+                            long updatedMarks = await _moodMarksRepository.UpdateManyAsync(moodMarksToUpdate);
+
+                            if (updatedMarks != moodMarksToUpdate.Count) throw new UpdateGroupSchemaException("Updated Marks count doesn't match count of marks that has to be updated");
                         }
-
-                        long updatedMarks = await _moodMarksRepository.UpdateManyAsync(moodMarksToUpdate);
-
-                        if (updatedMarks != moodMarksToUpdate.Count) throw new UpdateGroupSchemaException("Updated Marks count doesn't match count of marks that has to be updated");
                     }
                 }
 
