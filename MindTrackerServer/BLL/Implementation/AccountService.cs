@@ -93,14 +93,19 @@ namespace BLL.Implementation
         public async Task UpdateAccount(UpdateAccountRequest request, string id)
         {
             Account foundAccount = await _accountRepository.GetOneByIdAsync(id) ?? throw new AccountNotFoundException("Account doesn't exist");
-
-            if (!AccountValidator.IsPasswordValid(request.NewPassword!)) throw new InvalidAccountException("Invalid Password");
-
-            if (!Hasher.Verify(request.OldPassword ?? throw new WrongPasswordException("Old password wasn't sent"), foundAccount.Password!)) throw new WrongPasswordException("Wrong password");
-
-            foundAccount.Password = Hasher.Hash(request.NewPassword ?? throw new WrongPasswordException("New password wasn't sent"));
             
-            if(request.NewEmail != null) foundAccount.Email = request.NewEmail;
+            if (!Hasher.Verify(request.OldPassword ?? throw new WrongPasswordException("Old password wasn't sent"), foundAccount.Password!)) throw new WrongPasswordException("Wrong old password");
+            
+            if (request.NewPassword != null)
+            {
+                if (!AccountValidator.IsPasswordValid(request.NewPassword!)) throw new InvalidAccountException("Invalid Password");
+
+                foundAccount.Password = Hasher.Hash(request.NewPassword ?? throw new WrongPasswordException("New password wasn't sent"));
+            }
+
+            if (request.NewEmail != null) foundAccount.Email = request.NewEmail;
+
+            if (!_accountValidator.Validate(foundAccount).IsValid) throw new InvalidAccountException("Invalid email");
 
             await _accountRepository.UpdateAsync(foundAccount);
         }

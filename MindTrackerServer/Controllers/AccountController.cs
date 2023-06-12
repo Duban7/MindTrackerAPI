@@ -226,9 +226,9 @@ namespace MindTrackerServer.Controllers
         /// 
         ///     PUT /account
         ///     {
-        ///         "NewEmail": "string",
+        ///         "NewEmail": "string", //can be null
         ///         "OldPassword": "string",
-        ///         "NewPassword":"string"
+        ///         "NewPassword":"string" //can be null
         ///     }
         ///
         /// </remarks>
